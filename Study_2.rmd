@@ -1,0 +1,50 @@
+```{r}
+
+#Open package to read SPSS file and tidyLPA
+library("haven")
+library("tidyLPA")
+library("dplyr")
+
+```
+
+``` {r}
+#Read LSAc SPSS files in R
+tudb10 <- read_sav("Z:/LSAC dataset/General Release/TUDs/SPSS/tudb10.sav")
+tudb12 <- read_sav("Z:/LSAC dataset/General Release/TUDs/SPSS/tudb12.sav")
+tudb14 <- read_sav("Z:/LSAC dataset/General Release/TUDs/SPSS/tudb14.sav")
+```
+
+``` {r}
+#Select relevant columns for each TUD
+relevantcols10 <- tudb10 %>% 
+  select(hicid, loop, awake, bed, sleep, stime, mainact, actlab, secact1, secact2, secact3)
+relevantcols12 <- tudb12 %>% 
+  select(hicid, loop, awake, bed, sleep, stime, mainact, actlab, secact1, secact2, secact3)
+relevantcols14 <- tudb14 %>% 
+  select(hicid, loop, awake, bed, sleep, stime, mainact, secact1, secact2, secact3)
+
+
+```
+
+``` {r}
+install.packages("lubridate")
+library("lubridate")
+```
+
+``` {r}
+#Calculate time spent in each behaviour per diary
+relevantcols10 %>% 
+#Group activites by participant 
+  group_by(hicid) %>% 
+#Subtract start time from one activity from the next activity
+  mutate(totaltime = lead(stime) - stime) %>% 
+#Replace 'NA secs' (which will be the last activity of the day) with the function (sleep - stime) to determine time spent in final activity of the day
+  #I couldn't figure this out... this is what I attempted 
+  #Attempt 1: if (totaltime == 'NA secs'){sleep - stime}
+  #Attempt 2:ifelse(is.na(mutate(totaltime = lead(stime) - stime)), (sleep - stime), print())
+#Convert secs into minutes
+  mutate(minutes = minute(seconds_to_period(totaltime)))
+
+
+
+```

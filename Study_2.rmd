@@ -27,10 +27,9 @@ relevantcols14 <- tudb14 %>%
 ```
 
 ``` {r}
-install.packages("lubridate")
+#install.packages("lubridate")
 library("lubridate")
 ```
-
 ``` {r}
 #Calculate time spent in each behaviour per diary
 relevantcols10 %>% 
@@ -38,13 +37,65 @@ relevantcols10 %>%
   group_by(hicid) %>% 
 #Subtract start time from one activity from the next activity
   mutate(totaltime = lead(stime) - stime) %>% 
-#Replace 'NA secs' (which will be the last activity of the day) with the function (sleep - stime) to determine time spent in final activity of the day
+#Problem: Replace 'NA secs' (which will be the last activity of the day) with the function (sleep - stime) to determine time spent in final activity of the day
+  #I couldn't figure this out... this is what I attempted 
+  #Attempt 1: if (totaltime == 'NA secs'){sleep - stime}
+  #Attempt 2:ifelse(is.na(mutate(totaltime = lead(stime) - stime)), (sleep - stime), print())
+#Convert secs into minutes
+  mutate(minutes = minute(seconds_to_period(totaltime)))
+```
+
+``` {r}
+#Original Code we worked on 14JULY2020
+#Calculate time spent in each behaviour per diary
+d <- relevantcols10 %>% 
+#Group activites by participant 
+  group_by(hicid) %>% 
+#Subtract start time from one activity from the next activity
+  mutate(totaltime = lead(stime) - stime) %>% 
+#Problem: Replace 'NA secs' (which will be the last activity of the day) with the function (sleep - stime) to determine time spent in final activity of the day
   #I couldn't figure this out... this is what I attempted 
   #Attempt 1: if (totaltime == 'NA secs'){sleep - stime}
   #Attempt 2:ifelse(is.na(mutate(totaltime = lead(stime) - stime)), (sleep - stime), print())
 #Convert secs into minutes
   mutate(minutes = minute(seconds_to_period(totaltime)))
 
+before_sleep <- is.na(d$totaltime)
+d$totaltime[before_sleep] <- d$sleep[before_sleep] - d$stime[before_sleep]
+hist(as.numeric(d$totaltime[before_sleep]))
+# for where we have imputed time from sleep time, if negative because sleep was before final  activity, then make NA
+d$totaltime[before_sleep & as.numeric(d$totaltime) < 0 & -d$totaltime < "6000 sec" & !is.na(d$totaltime)] <- NA
+# for the rest, take 24 hours - answer to get total time
+after_midnight <- before_sleep & as.numeric(d$totaltime) < 0 & -d$totaltime > "6000 sec" & !is.na(d$totaltime)
+d$totaltime[after_midnight] <- 86400 + d$totaltime[after_midnight]
+hist(as.numeric(d$totaltime[!is.na(d$totaltime)]))
+d[d$totaltime<0, ]
+```
+
+```{r}
+#My thought process to get ride of the negative 'total time'
+#Calculate time spent in each behaviour per diary
+d <- relevantcols10 %>% 
+#Group activites by participant 
+  group_by(hicid) %>% 
+#Subtract start time from one activity from the next activity
+#Here I tried to make an if else statement. Since some activities didn't end/start until after midnight I thought it might be easiest to add the 'day' (86400 sec) here. I tried a few variations of the below comment, but couldn't get it to work. 
+# if(lead(stime) < stime) 
+ # {mutate(totaltime = (lead(stime) + 86400) - stime)}
+#else {mutate(totaltime = lead(stime) - stime)}  %>% 
+#Convert secs into minutes
+  mutate(minutes = minute(seconds_to_period(totaltime)))
+#Calculate last activity by subtracting it from sleep time
+before_sleep <- is.na(d$totaltime)
+d$totaltime[before_sleep] <- d$sleep[before_sleep] - d$stime[before_sleep]
+hist(as.numeric(d$totaltime[before_sleep]))
+# for where we have imputed time from sleep time, if negative because sleep was before final  activity, then make NA
+d$totaltime[before_sleep & as.numeric(d$totaltime) < 0 & -d$totaltime < "6000 sec" & !is.na(d$totaltime)] <- NA
+# for the rest, take 24 hours - answer to get total time
+after_midnight <- before_sleep & as.numeric(d$totaltime) < 0 & -d$totaltime > "6000 sec" & !is.na(d$totaltime)
+d$totaltime[after_midnight] <- 86400 + d$totaltime[after_midnight]
+hist(as.numeric(d$totaltime[!is.na(d$totaltime)]))
+d[d$totaltime<0, ]
 
 
 ```

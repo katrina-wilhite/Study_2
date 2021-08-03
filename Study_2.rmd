@@ -118,7 +118,7 @@ d10 %>%
     mainact %in% wrk_hh_pa ~ "Work and Household Light Physical Activity",
     mainact %in% active_trans ~ "Active Transportation",
     mainact %in% str_lt_mvpa ~ "structured Leisure Time Physical Activity",
-    mainact %in% unstr_lt_mvpa ~ "Unstructured Leisure Time Moderate- to Vigorous- Physical Activity",
+    mainact %in% unstr_lt_mvpa ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
     mainact %in% education_sb ~ "Education Based Sedentary Behaviour",
     mainact %in% lt_sb ~ "Leisure Time Sedentary Behaviour",
     mainact %in% passive_trans ~ "Passive Transportation",
@@ -132,7 +132,7 @@ d10 %>%
     secact1 %in% wrk_hh_pa ~ "Work and Household Light-Intensity Physical Activity",
     secact1 %in% active_trans ~ "Active Transportation",
     secact1 %in% str_lt_mvpa ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
-    secact1 %in% unstr_lt_mvpa ~ "Unstructured Leisure Time Moderate- to Vigorous- Physical Activity",
+    secact1 %in% unstr_lt_mvpa ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
     secact1 %in% education_sb ~ "Education-Based Sedentary Behaviour",
     secact1 %in% lt_sb ~ "Leisure Time Sedentary Behaviour",
     secact1 %in% passive_trans ~ "Passive Transportation",
@@ -148,7 +148,7 @@ d10 %>%
     secact2 %in% wrk_hh_pa ~ "Work and Household Light-Intensity Physical Activity",
     secact2 %in% active_trans ~ "Active Transportation",
     secact2 %in% str_lt_mvpa ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
-    secact2 %in% unstr_lt_mvpa ~ "Unstructured Leisure Time Moderate- to Vigorous- Physical Activity",
+    secact2 %in% unstr_lt_mvpa ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
     secact2 %in% education_sb ~ "Education-Based Sedentary Behaviour",
     secact2 %in% lt_sb ~ "Leisure Time Sedentary Behaviour",
     secact2 %in% passive_trans ~ "Passive Transportation",
@@ -175,12 +175,13 @@ d10 %>%
     secact3 %in% uncodeable_activity ~ "Uncodeable Activity",
     secact3 %in% no_secact ~ "None"
   )) %>% 
+#Make decision rules based on main activities and secondary activities 
   mutate(domain_specific_movement_behaviour = case_when(
     (mainact %in% unstr_lt_pa & secact1 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
     (mainact %in% wrk_hh_pa & secact1 %in% no_secact) ~ "Work and Household Light-Intensity Physical Activity",
     (mainact %in% active_trans & secact1 %in% no_secact) ~ "Active Transportation",
     (mainact %in% str_lt_mvpa & secact1 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
-    (mainact %in% unstr_lt_mvpa & secact1 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Physical Activity",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
     (mainact %in% education_sb & secact1 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
     (mainact %in% lt_sb & secact1 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
     (mainact %in% passive_trans & secact1 %in% no_secact) ~ "Passive Transportation",
@@ -193,7 +194,7 @@ d10 %>%
     (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Work and Household Light-Intensity Physical Activity",
     (mainact %in% active_trans & secact1 %in% active_trans & secact2 %in% no_secact) ~ "Active Transportation",
     (mainact %in% str_lt_mvpa & secact1 %in% str_lt_mvpa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
-    (mainact %in% unstr_lt_mvpa & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Physical Activity",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
     (mainact %in% education_sb & secact1 %in% education_sb & secact2 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
     (mainact %in% lt_sb & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
     (mainact %in% passive_trans & secact1 %in% passive_trans & secact2 %in% no_secact) ~ "Passive Transportation",
@@ -210,7 +211,7 @@ d10 %>%
     (mainact %in% wrk_hh_pa & secact1 %in% education_sb & secact2 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
     (mainact %in% wrk_hh_pa & secact1 %in% active_trans & secact2 %in% no_secact) ~ "Active Transportation",
     (mainact %in% wrk_hh_pa & secact1 %in% passive_trans & secact2 %in% no_secact) ~ "Passive Transportation",
-    (mainact %in% wrk_hh_pa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Social-Based Sedentary Behavour",
+    (mainact %in% wrk_hh_pa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
     (mainact %in% active_trans & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Active Transportation",
     (mainact %in% lt_sb & secact1 %in% unstr_lt_pa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
     (mainact %in% recreational_screentime & secact1 %in% unstr_lt_pa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
@@ -297,10 +298,19 @@ d10 %>%
     (mainact %in% education_sb & secact1 %in% str_lt_mvpa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
     (mainact %in% unstr_lt_pa & secact1 %in% recreational_screentime & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
     (mainact %in% active_trans & secact1 %in% recreational_screentime & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Active Transportation"
+  )) %>% 
+  #Combine domain-specific movement behaviours into overall, general movement behaviour (i.e., light-intensity physical activity, MVPA, sedentary behaviour, sleep)
+  mutate(general_movement_behaviour = case_when(
+    domain_specific_movement_behaviour %in% c("Unstructured Leisure Time Light-Intensity Physical Activity", "Work and Household Light-Intensity Physical Activity") ~ "Light-Intensity Physical Activity",
+    domain_specific_movement_behaviour %in% c("Active Transportation", "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity") ~ "Moderate- to Vigorous- Intensity Physical Activity",
+    domain_specific_movement_behaviour %in% c("Leisure Time Sedentary Behaviour", "Education-Based Sedentary Behaviour", "Passive Transportation", "Recreational Screen Time", "Social-Based Sedentary Behaviour", "Self Care Sedentary Behaviour") ~ "Sedentary Behaviour",
+    domain_specific_movement_behaviour %in% "Daytime Naps" ~ "Sleep",
+    domain_specific_movement_behaviour %in% "Uncodeable Activity" ~ "Uncodeable"
+    
   ))
 
 
-#Add column for decision rules 
+ 
 
 
 ```
@@ -335,6 +345,291 @@ d12$total_minutes <- d12$total_time_num %/% 60
 d12
 ```
 
+``` {r}
+  
+#Assign TUD activity codes to domain-specific variables  
+unstr_lt_pa <- c(454, 463, 464, 465, 466, 491, 450, 451)
+wrk_hh_pa <- c(1,11,31,41,51, 61, 71, 82, 83, 84, 91, 201, 211, 221,231,301, 311, 321, 331, 341, 342, 344, 351, 361, 362, 363, 364, 365, 366, 367, 368, 371, 381)
+active_trans <- c(901, 911)
+str_lt_mvpa <- c(401, 402, 403, 404, 405, 406, 407, 408, 411, 412, 413, 414, 415, 416, 417, 418, 430, 440)
+unstr_lt_mvpa <- c(421, 422, 423, 424, 425, 426, 427, 428)
+education_sb <- c(21, 81, 501, 521, 531, 541, 581, 601, 701)
+lt_sb <- c(281, 312, 981, 481, 462, 101, 511, 542, 543, 544, 545, 548, 551, 552, 555, 561, 591, 452, 453, 455, 456, 457, 458, 471, 472, 473)
+passive_trans <- c(921, 931, 941)
+recreational_screentime <- c(461, 611, 612, 621, 631, 641, 651, 661, 671, 681, 691, 841, 851)
+selfcare_sb <- c(241, 251, 261, 271)
+social_sb <- c(802, 811, 821, 831, 861, 871, 881)
+daytime_naps <- 571
+sleep_before_midnight <- 86400 - (d10$sleep_time_num[d10$sleep_time_num > 43200])
+sleep_after_midnight <- d10$sleep_time_num[d10$sleep_time_num >= 0 & d10$sleep_time_num < 43200]
+total_sleep_before_midnight <- d10$awake[sleep_before_midnight] + sleep_before_midnight
+total_sleep_after_midnight <- d10$awake[sleep_after_midnight] - d10$sleep_time_num[sleep_after_midnight]
+nighttime_sleep <- c(total_sleep_after_midnight, total_sleep_before_midnight) * 60
+uncodeable_activity <- c(971, 991, 998)
+no_secact <- -9
+
+#Add columns for domain-specific main and all secondary activities 
+d12 %>% 
+  mutate(domain_main_activity = case_when(
+    mainact %in% unstr_lt_pa ~ "Unstructured Leisure Time Light Physical Activity",
+    mainact %in% wrk_hh_pa ~ "Work and Household Light Physical Activity",
+    mainact %in% active_trans ~ "Active Transportation",
+    mainact %in% str_lt_mvpa ~ "structured Leisure Time Physical Activity",
+    mainact %in% unstr_lt_mvpa ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    mainact %in% education_sb ~ "Education Based Sedentary Behaviour",
+    mainact %in% lt_sb ~ "Leisure Time Sedentary Behaviour",
+    mainact %in% passive_trans ~ "Passive Transportation",
+    mainact %in% recreational_screentime ~ "Recreational Screen Time",
+    mainact %in% selfcare_sb ~ "Self Care Sedentary Behaviour",
+    mainact %in% social_sb ~ "Social Sedentary Behaviour",
+    mainact %in% daytime_naps ~ "Daytime Naps",
+    mainact %in% uncodeable_activity ~ "Uncodeable Activity")) %>% 
+  mutate(domain_secondary1_activity = case_when(
+    secact1 %in% unstr_lt_pa ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    secact1 %in% wrk_hh_pa ~ "Work and Household Light-Intensity Physical Activity",
+    secact1 %in% active_trans ~ "Active Transportation",
+    secact1 %in% str_lt_mvpa ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    secact1 %in% unstr_lt_mvpa ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    secact1 %in% education_sb ~ "Education-Based Sedentary Behaviour",
+    secact1 %in% lt_sb ~ "Leisure Time Sedentary Behaviour",
+    secact1 %in% passive_trans ~ "Passive Transportation",
+    secact1 %in% recreational_screentime ~ "Recreational Screen Time",
+    secact1 %in% selfcare_sb ~ "Self Care Sedentary Behaviour",
+    secact1 %in% social_sb ~ "Social-Based Sedentary Behaviour",
+    secact1 %in% daytime_naps ~ "Daytime Naps",
+    secact1 %in% uncodeable_activity ~ "Uncodeable Activity",
+    secact1 %in% no_secact ~ "None"
+  )) %>% 
+  mutate(domain_secondary2_activity = case_when(
+    secact2 %in% unstr_lt_pa ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    secact2 %in% wrk_hh_pa ~ "Work and Household Light-Intensity Physical Activity",
+    secact2 %in% active_trans ~ "Active Transportation",
+    secact2 %in% str_lt_mvpa ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    secact2 %in% unstr_lt_mvpa ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    secact2 %in% education_sb ~ "Education-Based Sedentary Behaviour",
+    secact2 %in% lt_sb ~ "Leisure Time Sedentary Behaviour",
+    secact2 %in% passive_trans ~ "Passive Transportation",
+    secact2 %in% recreational_screentime ~ "Recreational Screen Time",
+    secact2 %in% selfcare_sb ~ "Self Care Sedentary Behaviour",
+    secact2 %in% social_sb ~ "Social-Based Sedentary Behaviour",
+    secact2 %in% daytime_naps ~ "Daytime Naps",
+    secact2 %in% uncodeable_activity ~ "Uncodeable Activity",
+    secact2 %in% no_secact ~ "None"
+  )) %>% 
+  mutate(domain_secondary3_activity = case_when(
+    secact3 %in% unstr_lt_pa ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    secact3 %in% wrk_hh_pa ~ "Work and Household Light-Intensity Physical Activity",
+    secact3 %in% active_trans ~ "Active Transportation",
+    secact3 %in% str_lt_mvpa ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    secact3 %in% unstr_lt_mvpa ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    secact3 %in% education_sb ~ "Education-Based Sedentary Behaviour",
+    secact3 %in% lt_sb ~ "Leisure Time Sedentary Behaviour",
+    secact3 %in% passive_trans ~ "Passive Transportation",
+    secact3 %in% recreational_screentime ~ "Recreational Screen Time",
+    secact3 %in% selfcare_sb ~ "Self Care Sedentary Behaviour",
+    secact3 %in% social_sb ~ "Social-Based Sedentary Behaviour",
+    secact3 %in% daytime_naps ~ "Daytime Naps",
+    secact3 %in% uncodeable_activity ~ "Uncodeable Activity",
+    secact3 %in% no_secact ~ "None"
+  )) %>% 
+#Make decision rules based on main activities and secondary activities 
+  mutate(domain_specific_movement_behaviour = case_when(
+    (mainact %in% unstr_lt_pa & secact1 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% no_secact) ~ "Work and Household Light-Intensity Physical Activity",
+    (mainact %in% active_trans & secact1 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% str_lt_mvpa & secact1 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% education_sb & secact1 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% passive_trans & secact1 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% recreational_screentime & secact1 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% selfcare_sb & secact1 %in% no_secact) ~ "Self Care Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% daytime_naps & secact1 %in% no_secact) ~ "Daytime Naps",
+    (mainact %in% uncodeable_activity & secact1 %in% no_secact) ~ "Uncodeable Activity",
+    (mainact %in% unstr_lt_pa & secact1 %in% unstr_lt_pa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Work and Household Light-Intensity Physical Activity",
+    (mainact %in% active_trans & secact1 %in% active_trans & secact2 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% str_lt_mvpa & secact1 %in% str_lt_mvpa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% education_sb & secact1 %in% education_sb & secact2 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% passive_trans & secact1 %in% passive_trans & secact2 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% recreational_screentime & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% selfcare_sb & secact1 %in% selfcare_sb & secact2 %in% no_secact) ~ "Self Care Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% daytime_naps & secact1 %in% daytime_naps & secact2 %in% no_secact) ~ "Daytime Naps",
+    (mainact %in% uncodeable_activity & secact1 %in% uncodeable_activity & secact2 %in% no_secact) ~ "Uncodeable Activity",
+    (mainact %in% unstr_lt_pa & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% unstr_lt_pa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% wrk_hh_pa & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% wrk_hh_pa & secact1 %in% education_sb & secact2 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% wrk_hh_pa & secact1 %in% active_trans & secact2 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% wrk_hh_pa & secact1 %in% passive_trans & secact2 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% wrk_hh_pa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% active_trans & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% lt_sb & secact1 %in% unstr_lt_pa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% recreational_screentime & secact1 %in% unstr_lt_pa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% social_sb & secact1 %in% unstr_lt_pa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% passive_trans & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% recreational_screentime & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% social_sb & secact1 %in% passive_trans & secact2 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% social_sb & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% unstr_lt_pa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% str_lt_mvpa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% str_lt_mvpa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% social_sb & secact1 %in% str_lt_mvpa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% str_lt_mvpa & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% education_sb & secact2 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% education_sb & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% active_trans & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% active_trans & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% social_sb & secact1 %in% active_trans & secact2 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% passive_trans & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% unstr_lt_pa & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% recreational_screentime & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% recreational_screentime & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% education_sb & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% selfcare_sb & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Self Care Sedentary Behaviour",
+    (mainact %in% recreational_screentime & secact1 %in% str_lt_mvpa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% social_sb & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% recreational_screentime & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% recreational_screentime & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% recreational_screentime & secact1 %in% wrk_hh_pa & secact2 %in% wrk_hh_pa & secact3 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% lt_sb & secact1 %in% recreational_screentime & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% selfcare_sb & secact1 %in% social_sb & secact2 %in% education_sb & secact3 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% passive_trans & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% passive_trans & secact1 %in% recreational_screentime & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% passive_trans & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% passive_trans & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% lt_sb & secact1 %in% passive_trans & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% passive_trans & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% social_sb & secact1 %in% lt_sb & secact2 %in% passive_trans & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% active_trans & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% active_trans & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% active_trans & secact1 %in% lt_sb & secact2 %in% no_secact2 & secact3 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% recreational_screentime & secact1 %in% lt_sb & secact2 %in% uncodeable_activity & secact3 %in% uncodeable_activity) ~ "Recreational Screen Time",
+    (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% social_sb & secact3 %in% lt_sb) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% wrk_hh_pa & secact2 %in% wrk_hh_pa & secact3 %in% wrk_hh_pa) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% passive_trans & secact1 %in% lt_sb & secact2 %in% lt_sb & secact3 %in% social_sb) ~ "Passive Transportation",
+    (mainact %in% passive_trans & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% lt_sb) ~ "Passive Transportation",
+    (mainact %in% active_trans & secact1 %in% social_sb & secact2 %in% str_lt_mvpa & secact3 %in% social_sb) ~ "Active Transportation",
+    (mainact %in% active_trans & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% unstr_lt_mvpa) ~ "Active Transportation",
+    (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% unstr_lt_mvpa & secact3 %in% active_trans) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% unstr_lt_mvpa & secact2 %in% active_trans & secact3 %in% lt_sb) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% unstr_lt_mvpa & secact3 %in% wrk_hh_pa) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% education_sb & secact2 %in% str_lt_mvpa & secact3 %in% lt_sb) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% recreational_screentime & secact2 %in% social_sb & secact3 %in% education_sb) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% lt_sb & secact3 %in% social_sb) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% lt_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% passive_trans & secact1 %in% lt_sb & secact2 %in% education_sb & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% str_lt_mvpa & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% recreational_screentime & secact1 %in% social_sb & secact2 %in% uncodeable_activity & secact3 %in% recreational_screentime) ~ "Recreational Screen Time",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% education_sb & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% str_lt_mvpa & secact3 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% social_sb & secact1 %in% unstr_lt_mvpa & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% recreational_screentime & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% education_sb & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% passive_trans & secact2 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% lt_sb & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% unstr_lt_mvpa & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% social_sb & secact1 %in% lt_sb & secact2 %in% unstr_lt_mvpa & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% str_lt_mvpa & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% uncodeable_activity & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% wrk_hh_pa & secact1 %in% lt_sb & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% education_sb & secact1 %in% str_lt_mvpa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% unstr_lt_pa & secact1 %in% recreational_screentime & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% active_trans & secact1 %in% recreational_screentime & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% unstr_lt_mvpa & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% social_sb & secact1 %in% education_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% education_sb & secact2 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% lt_sb & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% education_sb & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% passive_trans & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% active_trans & secact1 %in% passive_trans & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% unstr_lt_mvpa) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% active_trans & secact1 %in% passive_trans & secact2 %in% social_sb & secact3 %in% lt_sb) ~ "Active Transportation",
+    (mainact %in% social_sb & secact1 %in% recreational_screentime & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% recreational_screentime & secact3 %in% recreational_screentime) ~ "Recreational Screen Time",
+    (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% wrk_hh_pa & secact3 %in% active_trans) ~ "Active Transportation",
+    (mainact %in% unstr_lt_pa & secact1 %in% active_trans & secact2 %in% social_sb & secact3 %in% lt_sb) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% passive_trans & secact1 %in% recreational_screentime & secact2 %in% social_sb & secact3 %in% lt_sb) ~ "Passive Transportation",
+    (mainact %in% social_sb & secact1 %in% lt_sb & secact2 %in% lt_sb & secact3 %in% unstr_lt_mvpa) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% recreational_screentime & secact1 %in% lt_sb & secact2 %in% wrk_hh_pa & secact3 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% lt_sb & secact1 %in% lt_sb & secact2 %in% wrk_hh_pa & secact3 %in% recreational_screentime) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% passive_trans & secact1 %in% recreational_screentime & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% active_trans & secact1 %in% passive_trans & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% active_trans & secact2 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% lt_sb & secact1 %in% passive_trans & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% active_trans & secact1 %in% str_lt_mvpa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% unstr_lt_pa & secact1 %in% education_sb & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% passive_trans & secact1 %in% lt_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% lt_sb & secact1 %in% wrk_hh_pa & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% unstr_lt_mvpa & secact3 %in% recreational_screentime) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% active_trans & secact1 %in% passive_trans & secact2 %in% social_sb & secact3 %in% recreational_screentime) ~ "Active Transportation",
+    (mainact %in% passive_trans & secact1 %in% social_sb & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% passive_trans & secact1 %in% social_sb & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% unstr_lt_pa & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% social_sb & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% active_trans & secact1 %in% social_sb & secact2 %in% unstr_lt_mvpa & secact3 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% daytime_naps & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Daytime Naps",
+    (mainact %in% active_trans & secact1 %in% unstr_lt_pa & secact2 %in% no_secact & secact3 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% active_trans & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% lt_sb & secact1 %in% unstr_lt_pa & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% recreational_screentime & secact1 %in% recreational_screentime & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% recreational_screentime & secact1 %in% lt_sb & secact2 %in% recreational_screentime & secact3 %in% recreational_screentime) ~ "Recreational Screen Time",
+    (mainact %in% recreational_screentime & secact1 %in% lt_sb & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% wrk_hh_pa & secact1 %in% education_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% str_lt_mvpa & secact1 %in% unstr_lt_pa & secact2 %in% wrk_hh_pa & secact3 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% str_lt_mvpa & secact1 %in% wrk_hh_pa & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% recreational_screentime & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% education_sb & secact1 %in% wrk_hh_pa & secact2 %in% recreational_screentime & secact3 %in% lt_sb) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% education_sb & secact1 %in% str_lt_mvpa & secact2 %in% recreational_screentime & secact3 %in% recreational_screentime) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% str_lt_mvpa & secact1 %in% wrk_hh_pa & secact2 %in% wrk_hh_pa & secact3 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% str_lt_mvpa & secact1 %in% recreational_screentime & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% str_lt_mvpa & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% passive_trans & secact1 %in% lt_sb & secact2 %in% active_trans & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% social_sb & secact1 %in% lt_sb & secact2 %in% unstr_lt_pa & secact3 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% daytime_naps & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Daytime Naps",
+    (mainact %in% passive_trans & secact1 %in% education_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% str_lt_mvpa & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% lt_sb) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% lt_sb & secact2 %in% wrk_hh_pa & secact3 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% wrk_hh_pa & secact1 %in% lt_sb & secact2 %in% wrk_hh_pa & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% recreational_screentime & secact2 %in% wrk_hh_pa & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% wrk_hh_pa & secact2 %in% wrk_hh_pa & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% active_trans & secact1 %in% passive_trans & secact2 %in% passive_trans & secact3 %in% lt_sb) ~ "Active Transportation",
+    (mainact %in% passive_trans & secact1 %in% unstr_lt_pa & secact2 %in% active_trans & secact3 %in% social_sb) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour"
+  )) %>% 
+  #Combine domain-specific movement behaviours into overall, general movement behaviour (i.e., light-intensity physical activity, MVPA, sedentary behaviour, sleep)
+  mutate(general_movement_behaviour = case_when(
+    domain_specific_movement_behaviour %in% c("Unstructured Leisure Time Light-Intensity Physical Activity", "Work and Household Light-Intensity Physical Activity") ~ "Light-Intensity Physical Activity",
+    domain_specific_movement_behaviour %in% c("Active Transportation", "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity") ~ "Moderate- to Vigorous- Intensity Physical Activity",
+    domain_specific_movement_behaviour %in% c("Leisure Time Sedentary Behaviour", "Education-Based Sedentary Behaviour", "Passive Transportation", "Recreational Screen Time", "Social-Based Sedentary Behaviour", "Self Care Sedentary Behaviour") ~ "Sedentary Behaviour",
+    domain_specific_movement_behaviour %in% "Daytime Naps" ~ "Sleep",
+    domain_specific_movement_behaviour %in% "Uncodeable Activity" ~ "Uncodeable"
+    
+  ))
+
+```
+
 ``` {r} 
 #Code from 20JULY2020
 #Calculate time spent in each behaviour for TUd14
@@ -363,6 +658,291 @@ d14$total_time_num[d14$total_time_num > 43200] <- NA
 #Convert total time from seconds to minutes 
 d14$total_minutes <- d14$total_time_num %/% 60
 d14
+```
+
+``` {r}
+  
+#Assign TUD activity codes to domain-specific variables  
+unstr_lt_pa <- c(454, 463, 464, 465, 466, 491, 450, 451)
+wrk_hh_pa <- c(1,11,31,41,51, 61, 71, 82, 83, 84, 91, 201, 211, 221,231,301, 311, 321, 331, 341, 342, 344, 351, 361, 362, 363, 364, 365, 366, 367, 368, 371, 381)
+active_trans <- c(901, 911)
+str_lt_mvpa <- c(401, 402, 403, 404, 405, 406, 407, 408, 411, 412, 413, 414, 415, 416, 417, 418, 430, 440)
+unstr_lt_mvpa <- c(421, 422, 423, 424, 425, 426, 427, 428)
+education_sb <- c(21, 81, 501, 521, 531, 541, 581, 601, 701)
+lt_sb <- c(281, 312, 981, 481, 462, 101, 511, 542, 543, 544, 545, 548, 551, 552, 555, 561, 591, 452, 453, 455, 456, 457, 458, 471, 472, 473)
+passive_trans <- c(921, 931, 941)
+recreational_screentime <- c(461, 611, 612, 621, 631, 641, 651, 661, 671, 681, 691, 841, 851)
+selfcare_sb <- c(241, 251, 261, 271)
+social_sb <- c(802, 811, 821, 831, 861, 871, 881)
+daytime_naps <- 571
+sleep_before_midnight <- 86400 - (d10$sleep_time_num[d10$sleep_time_num > 43200])
+sleep_after_midnight <- d10$sleep_time_num[d10$sleep_time_num >= 0 & d10$sleep_time_num < 43200]
+total_sleep_before_midnight <- d10$awake[sleep_before_midnight] + sleep_before_midnight
+total_sleep_after_midnight <- d10$awake[sleep_after_midnight] - d10$sleep_time_num[sleep_after_midnight]
+nighttime_sleep <- c(total_sleep_after_midnight, total_sleep_before_midnight) * 60
+uncodeable_activity <- c(971, 991, 998)
+no_secact <- -9
+
+#Add columns for domain-specific main and all secondary activities 
+d14 %>% 
+  mutate(domain_main_activity = case_when(
+    mainact %in% unstr_lt_pa ~ "Unstructured Leisure Time Light Physical Activity",
+    mainact %in% wrk_hh_pa ~ "Work and Household Light Physical Activity",
+    mainact %in% active_trans ~ "Active Transportation",
+    mainact %in% str_lt_mvpa ~ "structured Leisure Time Physical Activity",
+    mainact %in% unstr_lt_mvpa ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    mainact %in% education_sb ~ "Education Based Sedentary Behaviour",
+    mainact %in% lt_sb ~ "Leisure Time Sedentary Behaviour",
+    mainact %in% passive_trans ~ "Passive Transportation",
+    mainact %in% recreational_screentime ~ "Recreational Screen Time",
+    mainact %in% selfcare_sb ~ "Self Care Sedentary Behaviour",
+    mainact %in% social_sb ~ "Social Sedentary Behaviour",
+    mainact %in% daytime_naps ~ "Daytime Naps",
+    mainact %in% uncodeable_activity ~ "Uncodeable Activity")) %>% 
+  mutate(domain_secondary1_activity = case_when(
+    secact1 %in% unstr_lt_pa ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    secact1 %in% wrk_hh_pa ~ "Work and Household Light-Intensity Physical Activity",
+    secact1 %in% active_trans ~ "Active Transportation",
+    secact1 %in% str_lt_mvpa ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    secact1 %in% unstr_lt_mvpa ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    secact1 %in% education_sb ~ "Education-Based Sedentary Behaviour",
+    secact1 %in% lt_sb ~ "Leisure Time Sedentary Behaviour",
+    secact1 %in% passive_trans ~ "Passive Transportation",
+    secact1 %in% recreational_screentime ~ "Recreational Screen Time",
+    secact1 %in% selfcare_sb ~ "Self Care Sedentary Behaviour",
+    secact1 %in% social_sb ~ "Social-Based Sedentary Behaviour",
+    secact1 %in% daytime_naps ~ "Daytime Naps",
+    secact1 %in% uncodeable_activity ~ "Uncodeable Activity",
+    secact1 %in% no_secact ~ "None"
+  )) %>% 
+  mutate(domain_secondary2_activity = case_when(
+    secact2 %in% unstr_lt_pa ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    secact2 %in% wrk_hh_pa ~ "Work and Household Light-Intensity Physical Activity",
+    secact2 %in% active_trans ~ "Active Transportation",
+    secact2 %in% str_lt_mvpa ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    secact2 %in% unstr_lt_mvpa ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    secact2 %in% education_sb ~ "Education-Based Sedentary Behaviour",
+    secact2 %in% lt_sb ~ "Leisure Time Sedentary Behaviour",
+    secact2 %in% passive_trans ~ "Passive Transportation",
+    secact2 %in% recreational_screentime ~ "Recreational Screen Time",
+    secact2 %in% selfcare_sb ~ "Self Care Sedentary Behaviour",
+    secact2 %in% social_sb ~ "Social-Based Sedentary Behaviour",
+    secact2 %in% daytime_naps ~ "Daytime Naps",
+    secact2 %in% uncodeable_activity ~ "Uncodeable Activity",
+    secact2 %in% no_secact ~ "None"
+  )) %>% 
+  mutate(domain_secondary3_activity = case_when(
+    secact3 %in% unstr_lt_pa ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    secact3 %in% wrk_hh_pa ~ "Work and Household Light-Intensity Physical Activity",
+    secact3 %in% active_trans ~ "Active Transportation",
+    secact3 %in% str_lt_mvpa ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    secact3 %in% unstr_lt_mvpa ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    secact3 %in% education_sb ~ "Education-Based Sedentary Behaviour",
+    secact3 %in% lt_sb ~ "Leisure Time Sedentary Behaviour",
+    secact3 %in% passive_trans ~ "Passive Transportation",
+    secact3 %in% recreational_screentime ~ "Recreational Screen Time",
+    secact3 %in% selfcare_sb ~ "Self Care Sedentary Behaviour",
+    secact3 %in% social_sb ~ "Social-Based Sedentary Behaviour",
+    secact3 %in% daytime_naps ~ "Daytime Naps",
+    secact3 %in% uncodeable_activity ~ "Uncodeable Activity",
+    secact3 %in% no_secact ~ "None"
+  )) %>% 
+#Make decision rules based on main activities and secondary activities 
+  mutate(domain_specific_movement_behaviour = case_when(
+    (mainact %in% unstr_lt_pa & secact1 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% no_secact) ~ "Work and Household Light-Intensity Physical Activity",
+    (mainact %in% active_trans & secact1 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% str_lt_mvpa & secact1 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% education_sb & secact1 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% passive_trans & secact1 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% recreational_screentime & secact1 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% selfcare_sb & secact1 %in% no_secact) ~ "Self Care Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% daytime_naps & secact1 %in% no_secact) ~ "Daytime Naps",
+    (mainact %in% uncodeable_activity & secact1 %in% no_secact) ~ "Uncodeable Activity",
+    (mainact %in% unstr_lt_pa & secact1 %in% unstr_lt_pa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Work and Household Light-Intensity Physical Activity",
+    (mainact %in% active_trans & secact1 %in% active_trans & secact2 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% str_lt_mvpa & secact1 %in% str_lt_mvpa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% education_sb & secact1 %in% education_sb & secact2 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% passive_trans & secact1 %in% passive_trans & secact2 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% recreational_screentime & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% selfcare_sb & secact1 %in% selfcare_sb & secact2 %in% no_secact) ~ "Self Care Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% daytime_naps & secact1 %in% daytime_naps & secact2 %in% no_secact) ~ "Daytime Naps",
+    (mainact %in% uncodeable_activity & secact1 %in% uncodeable_activity & secact2 %in% no_secact) ~ "Uncodeable Activity",
+    (mainact %in% unstr_lt_pa & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% unstr_lt_pa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% wrk_hh_pa & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% wrk_hh_pa & secact1 %in% education_sb & secact2 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% wrk_hh_pa & secact1 %in% active_trans & secact2 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% wrk_hh_pa & secact1 %in% passive_trans & secact2 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% wrk_hh_pa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% active_trans & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% lt_sb & secact1 %in% unstr_lt_pa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% recreational_screentime & secact1 %in% unstr_lt_pa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% social_sb & secact1 %in% unstr_lt_pa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% passive_trans & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% recreational_screentime & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% social_sb & secact1 %in% passive_trans & secact2 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% social_sb & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% unstr_lt_pa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% str_lt_mvpa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% str_lt_mvpa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% social_sb & secact1 %in% str_lt_mvpa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% str_lt_mvpa & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% education_sb & secact2 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% education_sb & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% active_trans & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% active_trans & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% social_sb & secact1 %in% active_trans & secact2 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% passive_trans & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% unstr_lt_pa & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% recreational_screentime & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% recreational_screentime & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% education_sb & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% selfcare_sb & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Self Care Sedentary Behaviour",
+    (mainact %in% recreational_screentime & secact1 %in% str_lt_mvpa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% social_sb & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% recreational_screentime & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% recreational_screentime & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% recreational_screentime & secact1 %in% wrk_hh_pa & secact2 %in% wrk_hh_pa & secact3 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% lt_sb & secact1 %in% recreational_screentime & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% selfcare_sb & secact1 %in% social_sb & secact2 %in% education_sb & secact3 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% passive_trans & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% passive_trans & secact1 %in% recreational_screentime & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% passive_trans & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% passive_trans & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% lt_sb & secact1 %in% passive_trans & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% passive_trans & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% social_sb & secact1 %in% lt_sb & secact2 %in% passive_trans & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% active_trans & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% active_trans & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% active_trans & secact1 %in% lt_sb & secact2 %in% no_secact2 & secact3 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% recreational_screentime & secact1 %in% lt_sb & secact2 %in% uncodeable_activity & secact3 %in% uncodeable_activity) ~ "Recreational Screen Time",
+    (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% social_sb & secact3 %in% lt_sb) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% wrk_hh_pa & secact2 %in% wrk_hh_pa & secact3 %in% wrk_hh_pa) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% passive_trans & secact1 %in% lt_sb & secact2 %in% lt_sb & secact3 %in% social_sb) ~ "Passive Transportation",
+    (mainact %in% passive_trans & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% lt_sb) ~ "Passive Transportation",
+    (mainact %in% active_trans & secact1 %in% social_sb & secact2 %in% str_lt_mvpa & secact3 %in% social_sb) ~ "Active Transportation",
+    (mainact %in% active_trans & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% unstr_lt_mvpa) ~ "Active Transportation",
+    (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% unstr_lt_mvpa & secact3 %in% active_trans) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% unstr_lt_mvpa & secact2 %in% active_trans & secact3 %in% lt_sb) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% unstr_lt_mvpa & secact3 %in% wrk_hh_pa) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% education_sb & secact2 %in% str_lt_mvpa & secact3 %in% lt_sb) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% recreational_screentime & secact2 %in% social_sb & secact3 %in% education_sb) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% lt_sb & secact3 %in% social_sb) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% lt_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% passive_trans & secact1 %in% lt_sb & secact2 %in% education_sb & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% str_lt_mvpa & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% recreational_screentime & secact1 %in% social_sb & secact2 %in% uncodeable_activity & secact3 %in% recreational_screentime) ~ "Recreational Screen Time",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% education_sb & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% str_lt_mvpa & secact3 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% social_sb & secact1 %in% unstr_lt_mvpa & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% recreational_screentime & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% education_sb & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% passive_trans & secact2 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% lt_sb & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% unstr_lt_mvpa & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% social_sb & secact1 %in% lt_sb & secact2 %in% unstr_lt_mvpa & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% str_lt_mvpa & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% uncodeable_activity & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% wrk_hh_pa & secact1 %in% lt_sb & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% education_sb & secact1 %in% str_lt_mvpa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% unstr_lt_pa & secact1 %in% recreational_screentime & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% active_trans & secact1 %in% recreational_screentime & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% unstr_lt_mvpa & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% social_sb & secact1 %in% education_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% education_sb & secact2 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% lt_sb & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% education_sb & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% passive_trans & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% active_trans & secact1 %in% passive_trans & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% unstr_lt_mvpa & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% unstr_lt_mvpa) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% active_trans & secact1 %in% passive_trans & secact2 %in% social_sb & secact3 %in% lt_sb) ~ "Active Transportation",
+    (mainact %in% social_sb & secact1 %in% recreational_screentime & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% recreational_screentime & secact3 %in% recreational_screentime) ~ "Recreational Screen Time",
+    (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% wrk_hh_pa & secact3 %in% active_trans) ~ "Active Transportation",
+    (mainact %in% unstr_lt_pa & secact1 %in% active_trans & secact2 %in% social_sb & secact3 %in% lt_sb) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% passive_trans & secact1 %in% recreational_screentime & secact2 %in% social_sb & secact3 %in% lt_sb) ~ "Passive Transportation",
+    (mainact %in% social_sb & secact1 %in% lt_sb & secact2 %in% lt_sb & secact3 %in% unstr_lt_mvpa) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% recreational_screentime & secact1 %in% lt_sb & secact2 %in% wrk_hh_pa & secact3 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% lt_sb & secact1 %in% lt_sb & secact2 %in% wrk_hh_pa & secact3 %in% recreational_screentime) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% passive_trans & secact1 %in% recreational_screentime & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% active_trans & secact1 %in% passive_trans & secact2 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% active_trans & secact2 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% lt_sb & secact1 %in% passive_trans & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% active_trans & secact1 %in% str_lt_mvpa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% unstr_lt_pa & secact1 %in% education_sb & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% passive_trans & secact1 %in% lt_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% lt_sb & secact1 %in% wrk_hh_pa & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% unstr_lt_mvpa & secact3 %in% recreational_screentime) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% active_trans & secact1 %in% passive_trans & secact2 %in% social_sb & secact3 %in% recreational_screentime) ~ "Active Transportation",
+    (mainact %in% passive_trans & secact1 %in% social_sb & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% passive_trans & secact1 %in% social_sb & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% unstr_lt_pa & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% social_sb & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% active_trans & secact1 %in% social_sb & secact2 %in% unstr_lt_mvpa & secact3 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% daytime_naps & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Daytime Naps",
+    (mainact %in% active_trans & secact1 %in% unstr_lt_pa & secact2 %in% no_secact & secact3 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% active_trans & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% lt_sb & secact1 %in% unstr_lt_pa & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% recreational_screentime & secact1 %in% recreational_screentime & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% recreational_screentime & secact1 %in% lt_sb & secact2 %in% recreational_screentime & secact3 %in% recreational_screentime) ~ "Recreational Screen Time",
+    (mainact %in% recreational_screentime & secact1 %in% lt_sb & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Recreational Screen Time",
+    (mainact %in% wrk_hh_pa & secact1 %in% education_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% str_lt_mvpa & secact1 %in% unstr_lt_pa & secact2 %in% wrk_hh_pa & secact3 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% str_lt_mvpa & secact1 %in% wrk_hh_pa & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% recreational_screentime & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% education_sb & secact1 %in% wrk_hh_pa & secact2 %in% recreational_screentime & secact3 %in% lt_sb) ~ "Education-Based Sedentary Behaviour",
+    (mainact %in% education_sb & secact1 %in% str_lt_mvpa & secact2 %in% recreational_screentime & secact3 %in% recreational_screentime) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% str_lt_mvpa & secact1 %in% wrk_hh_pa & secact2 %in% wrk_hh_pa & secact3 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% str_lt_mvpa & secact1 %in% recreational_screentime & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% str_lt_mvpa & secact2 %in% recreational_screentime & secact3 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% passive_trans & secact1 %in% lt_sb & secact2 %in% active_trans & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% social_sb & secact1 %in% lt_sb & secact2 %in% unstr_lt_pa & secact3 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% daytime_naps & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Daytime Naps",
+    (mainact %in% passive_trans & secact1 %in% education_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Passive Transportation",
+    (mainact %in% str_lt_mvpa & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
+    (mainact %in% wrk_hh_pa & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% lt_sb) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% social_sb & secact1 %in% lt_sb & secact2 %in% wrk_hh_pa & secact3 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
+    (mainact %in% wrk_hh_pa & secact1 %in% lt_sb & secact2 %in% wrk_hh_pa & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% recreational_screentime & secact2 %in% wrk_hh_pa & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% lt_sb & secact1 %in% wrk_hh_pa & secact2 %in% wrk_hh_pa & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
+    (mainact %in% active_trans & secact1 %in% passive_trans & secact2 %in% passive_trans & secact3 %in% lt_sb) ~ "Active Transportation",
+    (mainact %in% passive_trans & secact1 %in% unstr_lt_pa & secact2 %in% active_trans & secact3 %in% social_sb) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
+    (mainact %in% lt_sb & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour"
+  )) %>% 
+  #Combine domain-specific movement behaviours into overall, general movement behaviour (i.e., light-intensity physical activity, MVPA, sedentary behaviour, sleep)
+  mutate(general_movement_behaviour = case_when(
+    domain_specific_movement_behaviour %in% c("Unstructured Leisure Time Light-Intensity Physical Activity", "Work and Household Light-Intensity Physical Activity") ~ "Light-Intensity Physical Activity",
+    domain_specific_movement_behaviour %in% c("Active Transportation", "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity") ~ "Moderate- to Vigorous- Intensity Physical Activity",
+    domain_specific_movement_behaviour %in% c("Leisure Time Sedentary Behaviour", "Education-Based Sedentary Behaviour", "Passive Transportation", "Recreational Screen Time", "Social-Based Sedentary Behaviour", "Self Care Sedentary Behaviour") ~ "Sedentary Behaviour",
+    domain_specific_movement_behaviour %in% "Daytime Naps" ~ "Sleep",
+    domain_specific_movement_behaviour %in% "Uncodeable Activity" ~ "Uncodeable"
+    
+  ))
+
 ```
 
 ```{r}

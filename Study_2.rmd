@@ -469,28 +469,35 @@ long_d10 %>%
  # )) %>% 
 
  
-dcast(hicid + awake + sleep ~ c(domain_specific_movement_behaviour), value.var="total_minutes", fun.aggregate = sum) -> wide_d10
+dcast(hicid + awake_time_num + sleep_time_num ~ c(domain_specific_movement_behaviour), value.var="total_minutes", fun.aggregate = sum) -> wide_d10
  
-
+wide_d10
 
 #Calculate Nighttime Sleep 
 #Make variable for subjects who went to sleep before midnight
 d10$sleep_time_num
-sleep_before_midnight <- !is.na(d10$sleep_time_num) & d10$sleep_time_num > 43200
+sleep_before_midnight <- !is.na(wide_d10$sleep_time_num) & wide_d10$sleep_time_num > 43200
 #Make variable for subjects who went to sleep after midnight 
-sleep_after_midnight <- !is.na(d10$sleep_time_num) & d10$sleep_time_num <= 43200
+sleep_after_midnight <- !is.na(wide_d10$sleep_time_num) & wide_d10$sleep_time_num <= 43200
 
 #For subjects who went to sleep before midnight, subtract their sleep time from 86400 
-sleep_to_midnight_calculation <- 86400 - d10$sleep_time_num[sleep_before_midnight]
-total_sleep_before_midnight <- d10$awake_time_num[sleep_before_midnight] + sleep_to_midnight_calculation
-d10$sleep_time_num[sleep_before_midnight] <- total_sleep_before_midnight
+sleep_to_midnight_calculation <- 86400 - wide_d10$sleep_time_num[sleep_before_midnight]
+total_sleep_before_midnight <- wide_d10$awake_time_num[sleep_before_midnight] + sleep_to_midnight_calculation
+wide_d10$sleep_time_num[sleep_before_midnight] <- total_sleep_before_midnight
 hist(total_sleep_before_midnight)
 
-total_sleep_after_midnight <- d10$awake_time_num[sleep_after_midnight] - d10$sleep_time_num[sleep_after_midnight]
-d10$sleep_time_num[sleep_after_midnight] <- total_sleep_after_midnight
+total_sleep_after_midnight <- wide_d10$awake_time_num[sleep_after_midnight] - wide_d10$sleep_time_num[sleep_after_midnight]
+wide_d10$sleep_time_num[sleep_after_midnight] <- total_sleep_after_midnight
 hist(total_sleep_after_midnight)
 
 nighttime_sleep <- c(total_sleep_after_midnight, total_sleep_before_midnight) / 60
+
+
+wide_d10$"Nighttime Sleep" <- nighttime_sleep
+
+wide_d10$"Light-Intensity Physical Activity" <- wide_d10$`Work and Household Light-Intensity Physical Activity` + wide_d10$`Unstructured Leisure Time Light-Intensity Physical Activity`
+wide_d10$"Moderate- to Vigorous- Intensity Physical Activity" <- wide_d10$`Active Transportation` + wide_d10$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d10$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
+wide_d10$"Sedentary Behaviour" <- wide_d10$`Leisure Time Sedentary Behaviour` + wide_d10$`Social-Based Sedentary Behaviour` + wide_d10$`Recreational Screen Time` + wide_d10$`Education-Based Sedentary Behaviour` + wide_d10$`Self Care Sedentary Behaviour`
 
 basic_sleep_calculation <- d10$awake_time_num - d10$sleep_time_num
 final_sleep_after_midnight <- basic_sleep_calculation[basic_sleep_calculation>0]

@@ -89,9 +89,11 @@ d10$total_time_num <- d10$end_time_num - d10$start_time_num
 d10$total_time_num[d10$total_time_num > 43200] <- NA  
 #Convert total time from seconds to minutes 
 d10$total_minutes <- d10$total_time_num %/% 60
-d10
+d10 %>% 
+  filter(is.na(end_time_num))
 
 ```
+
 
 ``` {r}
 #Assign TUD activity codes to domain-specific variables for B-cohort at age 10
@@ -493,20 +495,18 @@ hist(total_sleep_after_midnight)
 nighttime_sleep <- c(total_sleep_after_midnight, total_sleep_before_midnight) / 60
 
 
-wide_d10$"Nighttime Sleep" <- nighttime_sleep
+wide_d10_no_na$"Nighttime Sleep" <- (nighttime_sleep)
 
-wide_d10$"Light-Intensity Physical Activity" <- wide_d10$`Work and Household Light-Intensity Physical Activity` + wide_d10$`Unstructured Leisure Time Light-Intensity Physical Activity`
-wide_d10$"Moderate- to Vigorous- Intensity Physical Activity" <- wide_d10$`Active Transportation` + wide_d10$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d10$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
-wide_d10$"Sedentary Behaviour" <- wide_d10$`Leisure Time Sedentary Behaviour` + wide_d10$`Social-Based Sedentary Behaviour` + wide_d10$`Recreational Screen Time` + wide_d10$`Education-Based Sedentary Behaviour` + wide_d10$`Self Care Sedentary Behaviour`
+wide_d10_no_na$"Light-Intensity Physical Activity" <- wide_d10_no_na$`Work and Household Light-Intensity Physical Activity` + wide_d10_no_na$`Unstructured Leisure Time Light-Intensity Physical Activity`
+wide_d10_no_na$"Moderate- to Vigorous- Intensity Physical Activity" <- wide_d10_no_na$`Active Transportation` + wide_d10_no_na$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d10_no_na$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
+wide_d10_no_na$"Sedentary Behaviour" <- wide_d10_no_na$`Leisure Time Sedentary Behaviour` + wide_d10_no_na$`Social-Based Sedentary Behaviour` + wide_d10_no_na$`Recreational Screen Time` + wide_d10_no_na$`Education-Based Sedentary Behaviour` + wide_d10_no_na$`Self Care Sedentary Behaviour`
+wide_d10_no_na$"Sleep" <- wide_d10_no_na$`Daytime Naps` + wide_d10_no_na$`Nighttime Sleep`
 
-basic_sleep_calculation <- d10$awake_time_num - d10$sleep_time_num
-final_sleep_after_midnight <- basic_sleep_calculation[basic_sleep_calculation>0]
-basic_sleep_negatives <- basic_sleep_calculation[basic_sleep_calculation <0]
 
+
+wide_d10[!is.na(wide_d10$sleep_time_num),] -> wide_d10_no_na
  
- 
-  
- 
+
 
  
  long_d10 %>% 
@@ -516,6 +516,9 @@ basic_sleep_negatives <- basic_sleep_calculation[basic_sleep_calculation <0]
 names(wide_d10)
 
 ```
+
+
+
 
 ``` {r} 
 #Code from 20JULY2020

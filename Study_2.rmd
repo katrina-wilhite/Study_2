@@ -89,8 +89,8 @@ d10$total_time_num <- d10$end_time_num - d10$start_time_num
 d10$total_time_num[d10$total_time_num > 43200] <- NA  
 #Convert total time from seconds to minutes 
 d10$total_minutes <- d10$total_time_num %/% 60
-d10 %>% 
-  filter(is.na(end_time_num))
+#Get rid of NAs for sleep time because nighttime sleep cannot be calculated, since less than 5% (6/3460) participants have missing sleep data it is OK to delete them without biasing the results 
+d10[!is.na(d10$sleep_time_num),] -> d10_no_na
 
 ```
 
@@ -118,7 +118,7 @@ uncodeable_activity <- c(971, 991, 998)
 no_secact <- -9
 
 #Add columns for domain-specific main and all secondary activities 
-d10 %>% 
+d10_no_na %>% 
   mutate(domain_main_activity = case_when(
     mainact %in% unstr_lt_pa ~ "Unstructured Leisure Time Light Physical Activity",
     mainact %in% wrk_hh_pa ~ "Work and Household Light Physical Activity",
@@ -457,23 +457,9 @@ d10 %>%
     
   )) -> long_d10
 
+#Convert dataset from long to wide format 
 long_d10 %>% 
-
-
-  #Combine domain-specific movement behaviours into overall, general movement behaviour (i.e., light-intensity physical activity, MVPA, sedentary behaviour, sleep)
- 
-   #mutate(general_movement_behaviour = case_when(
-   # domain_specific_movement_behaviour %in% c("Unstructured Leisure Time Light-Intensity Physical Activity", "Work and Household Light-Intensity Physical Activity") ~ "Light-Intensity Physical Activity",
-  #  domain_specific_movement_behaviour %in% c("Active Transportation", "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity") ~ "Moderate- to Vigorous- Intensity Physical Activity",
-  #  domain_specific_movement_behaviour %in% c("Leisure Time Sedentary Behaviour", "Education-Based Sedentary Behaviour", "Passive Transportation", "Recreational Screen Time", "Social-Based Sedentary Behaviour", "Self Care Sedentary Behaviour") ~ "Sedentary Behaviour",
-  #  domain_specific_movement_behaviour %in% "Uncodeable Activity" ~ "Uncodeable"
-    
- # )) %>% 
-
- 
-dcast(hicid + awake_time_num + sleep_time_num ~ c(domain_specific_movement_behaviour), value.var="total_minutes", fun.aggregate = sum) -> wide_d10
- 
-wide_d10
+  dcast(hicid + awake_time_num + sleep_time_num ~ c(domain_specific_movement_behaviour), value.var="total_minutes", fun.aggregate = sum) -> wide_d10
 
 #Calculate Nighttime Sleep 
 #Make variable for subjects who went to sleep before midnight
@@ -484,36 +470,26 @@ sleep_after_midnight <- !is.na(wide_d10$sleep_time_num) & wide_d10$sleep_time_nu
 
 #For subjects who went to sleep before midnight, subtract their sleep time from 86400 
 sleep_to_midnight_calculation <- 86400 - wide_d10$sleep_time_num[sleep_before_midnight]
+#For the same subjects, add above calculation to their wake time to get their total sleep time 
 total_sleep_before_midnight <- wide_d10$awake_time_num[sleep_before_midnight] + sleep_to_midnight_calculation
+#Put calculation into dataset 
 wide_d10$sleep_time_num[sleep_before_midnight] <- total_sleep_before_midnight
 hist(total_sleep_before_midnight)
-
+#For subjects who went to sleep after midnight, subtract sleep time from wake time 
 total_sleep_after_midnight <- wide_d10$awake_time_num[sleep_after_midnight] - wide_d10$sleep_time_num[sleep_after_midnight]
+#Put calculation into dataset 
 wide_d10$sleep_time_num[sleep_after_midnight] <- total_sleep_after_midnight
 hist(total_sleep_after_midnight)
-
+#Convert sleep time into minutes 
 nighttime_sleep <- c(total_sleep_after_midnight, total_sleep_before_midnight) / 60
+#Add nighttime sleep into dataset
+wide_d10$"Nighttime Sleep" <- (nighttime_sleep)
 
-
-wide_d10_no_na$"Nighttime Sleep" <- (nighttime_sleep)
-
-wide_d10_no_na$"Light-Intensity Physical Activity" <- wide_d10_no_na$`Work and Household Light-Intensity Physical Activity` + wide_d10_no_na$`Unstructured Leisure Time Light-Intensity Physical Activity`
-wide_d10_no_na$"Moderate- to Vigorous- Intensity Physical Activity" <- wide_d10_no_na$`Active Transportation` + wide_d10_no_na$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d10_no_na$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
-wide_d10_no_na$"Sedentary Behaviour" <- wide_d10_no_na$`Leisure Time Sedentary Behaviour` + wide_d10_no_na$`Social-Based Sedentary Behaviour` + wide_d10_no_na$`Recreational Screen Time` + wide_d10_no_na$`Education-Based Sedentary Behaviour` + wide_d10_no_na$`Self Care Sedentary Behaviour`
-wide_d10_no_na$"Sleep" <- wide_d10_no_na$`Daytime Naps` + wide_d10_no_na$`Nighttime Sleep`
-
-
-
-wide_d10[!is.na(wide_d10$sleep_time_num),] -> wide_d10_no_na
- 
-
-
- 
- long_d10 %>% 
-  filter(is.na(domain_specific_movement_behaviour)) %>% 
-  ungroup() %>%
-  distinct(domain_main_activity, domain_secondary1_activity, domain_secondary2_activity, domain_secondary3_activity)
-names(wide_d10)
+#Add new columns for general movement behaviours
+wide_d10$"Light-Intensity Physical Activity" <- wide_d10$`Work and Household Light-Intensity Physical Activity` + wide_d10$`Unstructured Leisure Time Light-Intensity Physical Activity`
+wide_d10$"Moderate- to Vigorous- Intensity Physical Activity" <- wide_d10$`Active Transportation` + wide_d10$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d10$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
+wide_d10$"Sedentary Behaviour" <- wide_d10$`Leisure Time Sedentary Behaviour` + wide_d10$`Social-Based Sedentary Behaviour` + wide_d10$`Recreational Screen Time` + wide_d10$`Education-Based Sedentary Behaviour` + wide_d10$`Self Care Sedentary Behaviour`
+wide_d10$"Sleep" <- wide_d10$`Daytime Naps` + wide_d10$`Nighttime Sleep`
 
 ```
 
@@ -530,7 +506,8 @@ d12 <- relevantcols12 %>%
   mutate(end_time_num = as.numeric(lead(stime))) %>%
 #Make start and sleep times as numeric to avoid negative midnight problem 
   mutate(start_time_num = as.numeric(stime)) %>%
-  mutate(sleep_time_num = as.numeric(sleep))
+  mutate(sleep_time_num = as.numeric(sleep)) %>% 
+  mutate(awake_time_num = as.numeric(awake))
 #Assign last activities of the day to be NA since they don't have a time to be subtracted from 
 before_sleep <- is.na(d12$end_time_num)
 #sleep_midnight <- (d$sleep_time_num == 0) + 86400 (This was an attempt to solve the problem at the end of this chunk. Some end_times were incorrect)
@@ -547,7 +524,8 @@ d12$total_time_num <- d12$end_time_num - d12$start_time_num
 d12$total_time_num[d12$total_time_num > 43200] <- NA  
 #Convert total time from seconds to minutes 
 d12$total_minutes <- d12$total_time_num %/% 60
-d12
+#Get rid of NAs for sleep time because nighttime sleep cannot be calculated, since less than 5% (1/3058) participants have missing sleep data it is OK to delete them without biasing the results 
+d12[!is.na(d12$sleep_time_num),] -> d12_no_na
 ```
 
 ``` {r}
@@ -575,7 +553,7 @@ uncodeable_activity <- c(971, 991, 998)
 no_secact <- -9
 
 #Add columns for domain-specific main and all secondary activities 
-d12 %>% 
+d12_no_na %>% 
   mutate(domain_main_activity = case_when(
     mainact %in% unstr_lt_pa ~ "Unstructured Leisure Time Light Physical Activity",
     mainact %in% wrk_hh_pa ~ "Work and Household Light Physical Activity",
@@ -915,25 +893,41 @@ d12 %>%
    (mainact %in% unstr_lt_pa & !(secact1 %in% recreational_screentime | secact2 %in% recreational_screentime | secact3 %in% recreational_screentime | secact1 %in% education_sb | secact2 %in% education_sb | secact3 %in% education_sb | secact1 %in% selfcare_sb | secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact1 %in% lt_sb | secact2 %in% lt_sb | secact3 %in% lt_sb) & !(secact1 %in% str_lt_mvpa | secact2 %in% str_lt_mvpa | secact3 %in% str_lt_mvpa) & !(secact1 %in% unstr_lt_mvpa | secact2 %in% unstr_lt_mvpa | secact3 %in% unstr_lt_mvpa) & !(secact1 %in% passive_trans | secact2 %in% passive_trans | secact3 %in% passive_trans) & !(secact1 %in% active_trans | secact2 %in% active_trans | secact3 %in% active_trans)) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
    (mainact %in% uncodeable_activity & secact1 %in% unstr_lt_pa & !(secact1 %in% recreational_screentime | secact2 %in% recreational_screentime | secact3 %in% recreational_screentime | secact1 %in% education_sb | secact2 %in% education_sb | secact3 %in% education_sb | secact1 %in% selfcare_sb | secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact1 %in% lt_sb | secact2 %in% lt_sb | secact3 %in% lt_sb) & !(secact1 %in% str_lt_mvpa | secact2 %in% str_lt_mvpa | secact3 %in% str_lt_mvpa) & !(secact1 %in% unstr_lt_mvpa | secact2 %in% unstr_lt_mvpa | secact3 %in% unstr_lt_mvpa) & !(secact1 %in% passive_trans | secact2 %in% passive_trans | secact3 %in% passive_trans) & !(secact1 %in% active_trans | secact2 %in% active_trans | secact3 %in% active_trans)) ~ "Unstructured Leisure Time Light-Intensity Physical Activity"
     
-  )) -> wide_d12 %>% 
+  )) -> long_d12 
 
+#Convert dataset from long to wide format 
+long_d12 %>% 
+  dcast(hicid + awake_time_num + sleep_time_num ~ c(domain_specific_movement_behaviour), value.var="total_minutes", fun.aggregate = sum) -> wide_d12
 
-  #Combine domain-specific movement behaviours into overall, general movement behaviour (i.e., light-intensity physical activity, MVPA, sedentary behaviour, sleep)
-  mutate(general_movement_behaviour = case_when(
-    domain_specific_movement_behaviour %in% c("Unstructured Leisure Time Light-Intensity Physical Activity", "Work and Household Light-Intensity Physical Activity") ~ "Light-Intensity Physical Activity",
-    domain_specific_movement_behaviour %in% c("Active Transportation", "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity") ~ "Moderate- to Vigorous- Intensity Physical Activity",
-    domain_specific_movement_behaviour %in% c("Leisure Time Sedentary Behaviour", "Education-Based Sedentary Behaviour", "Passive Transportation", "Recreational Screen Time", "Social-Based Sedentary Behaviour", "Self Care Sedentary Behaviour") ~ "Sedentary Behaviour",
-    domain_specific_movement_behaviour %in% "Daytime Naps" ~ "Sleep",
-    domain_specific_movement_behaviour %in% "Uncodeable Activity" ~ "Uncodeable"
-    
-  ))  
-%>% 
- wide_d12 %>%  dcast(hicid ~ c(domain_specific_movement_behaviour, general_movement_behaviour), value.var="total_minutes", fun.aggregate = sum) 
-  #Problem: I need to add my nighttimte_sleep calculation from above as a separate column and then combine it with daytime naps to get total "Sleep #"mutate(subject_nighttime_sleep = distinct(nighttime_sleep))
-wide_d12 %>% 
-  filter(is.na(domain_specific_movement_behaviour)) %>% 
-  ungroup() %>%
-  distinct(domain_main_activity, domain_secondary1_activity, domain_secondary2_activity, domain_secondary3_activity)
+#Calculate Nighttime Sleep 
+#Make variable for subjects who went to sleep before midnight
+sleep_before_midnight <- !is.na(wide_d12$sleep_time_num) & wide_d12$sleep_time_num > 43200
+#Make variable for subjects who went to sleep after midnight 
+sleep_after_midnight <- !is.na(wide_d12$sleep_time_num) & wide_d12$sleep_time_num <= 43200
+
+#For subjects who went to sleep before midnight, subtract their sleep time from 86400 
+sleep_to_midnight_calculation <- 86400 - wide_d12$sleep_time_num[sleep_before_midnight]
+#For the same subjects, add above calculation to their wake time to get their total sleep time 
+total_sleep_before_midnight <- wide_d12$awake_time_num[sleep_before_midnight] + sleep_to_midnight_calculation
+#Put calculation into dataset 
+wide_d12$sleep_time_num[sleep_before_midnight] <- total_sleep_before_midnight
+hist(total_sleep_before_midnight)
+#For subjects who went to sleep after midnight, subtract sleep time from wake time 
+total_sleep_after_midnight <- wide_d12$awake_time_num[sleep_after_midnight] - wide_d12$sleep_time_num[sleep_after_midnight]
+#Put calculation into dataset 
+wide_d12$sleep_time_num[sleep_after_midnight] <- total_sleep_after_midnight
+hist(total_sleep_after_midnight)
+#Convert sleep time into minutes 
+nighttime_sleep <- c(total_sleep_after_midnight, total_sleep_before_midnight) / 60
+#Add nighttime sleep into dataset
+wide_d12$"Nighttime Sleep" <- (nighttime_sleep)
+
+#Add new columns for general movement behaviours
+wide_d12$"Light-Intensity Physical Activity" <- wide_d12$`Work and Household Light-Intensity Physical Activity` + wide_d12$`Unstructured Leisure Time Light-Intensity Physical Activity`
+wide_d12$"Moderate- to Vigorous- Intensity Physical Activity" <- wide_d12$`Active Transportation` + wide_d12$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d12$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
+wide_d12$"Sedentary Behaviour" <- wide_d12$`Leisure Time Sedentary Behaviour` + wide_d12$`Social-Based Sedentary Behaviour` + wide_d12$`Recreational Screen Time` + wide_d12$`Education-Based Sedentary Behaviour` + wide_d12$`Self Care Sedentary Behaviour`
+wide_d12$"Sleep" <- wide_d12$`Daytime Naps` + wide_d12$`Nighttime Sleep`
+
 
 ```
 
@@ -947,7 +941,8 @@ d14 <- relevantcols14 %>%
   mutate(end_time_num = as.numeric(lead(stime))) %>%
 #Make start and sleep times as numeric to avoid negative midnight problem 
   mutate(start_time_num = as.numeric(stime)) %>%
-  mutate(sleep_time_num = as.numeric(sleep))
+  mutate(sleep_time_num = as.numeric(sleep)) %>% 
+  mutate(awake_time_num = as.numeric(awake))
 #Assign last activities of the day to be NA since they don't have a time to be subtracted from 
 before_sleep <- is.na(d14$end_time_num)
 #sleep_midnight <- (d$sleep_time_num == 0) + 86400 (This was an attempt to solve the problem at the end of this chunk. Some end_times were incorrect)
@@ -964,7 +959,8 @@ d14$total_time_num <- d14$end_time_num - d14$start_time_num
 d14$total_time_num[d14$total_time_num > 43200] <- NA  
 #Convert total time from seconds to minutes 
 d14$total_minutes <- d14$total_time_num %/% 60
-d14
+#Get rid of NAs for sleep time because nighttime sleep cannot be calculated, since less than 5% (2/2827) participants have missing sleep data it is OK to delete them without biasing the results 
+d14[!is.na(d14$sleep_time_num),] -> d14_no_na
 ```
 
 ``` {r}
@@ -991,7 +987,7 @@ uncodeable_activity <- c(971, 991, 998)
 no_secact <- -9
 
 #Add columns for domain-specific main and all secondary activities 
-d14 %>% 
+d14_no_na %>% 
   mutate(domain_main_activity = case_when(
     mainact %in% unstr_lt_pa ~ "Unstructured Leisure Time Light Physical Activity",
     mainact %in% wrk_hh_pa ~ "Work and Household Light Physical Activity",
@@ -1331,26 +1327,40 @@ d14 %>%
    (mainact %in% unstr_lt_pa & !(secact1 %in% recreational_screentime | secact2 %in% recreational_screentime | secact3 %in% recreational_screentime | secact1 %in% education_sb | secact2 %in% education_sb | secact3 %in% education_sb | secact1 %in% selfcare_sb | secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact1 %in% lt_sb | secact2 %in% lt_sb | secact3 %in% lt_sb) & !(secact1 %in% str_lt_mvpa | secact2 %in% str_lt_mvpa | secact3 %in% str_lt_mvpa) & !(secact1 %in% unstr_lt_mvpa | secact2 %in% unstr_lt_mvpa | secact3 %in% unstr_lt_mvpa) & !(secact1 %in% passive_trans | secact2 %in% passive_trans | secact3 %in% passive_trans) & !(secact1 %in% active_trans | secact2 %in% active_trans | secact3 %in% active_trans)) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
    (mainact %in% uncodeable_activity & secact1 %in% unstr_lt_pa & !(secact1 %in% recreational_screentime | secact2 %in% recreational_screentime | secact3 %in% recreational_screentime | secact1 %in% education_sb | secact2 %in% education_sb | secact3 %in% education_sb | secact1 %in% selfcare_sb | secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact1 %in% lt_sb | secact2 %in% lt_sb | secact3 %in% lt_sb) & !(secact1 %in% str_lt_mvpa | secact2 %in% str_lt_mvpa | secact3 %in% str_lt_mvpa) & !(secact1 %in% unstr_lt_mvpa | secact2 %in% unstr_lt_mvpa | secact3 %in% unstr_lt_mvpa) & !(secact1 %in% passive_trans | secact2 %in% passive_trans | secact3 %in% passive_trans) & !(secact1 %in% active_trans | secact2 %in% active_trans | secact3 %in% active_trans)) ~ "Unstructured Leisure Time Light-Intensity Physical Activity"
     
-  )) -> wide_d14
+  )) -> long_d14
 
+#Convert dataset from long to wide format 
+long_d14 %>% 
+  dcast(hicid + awake_time_num + sleep_time_num ~ c(domain_specific_movement_behaviour), value.var="total_minutes", fun.aggregate = sum) -> wide_d14
 
-  #Combine domain-specific movement behaviours into overall, general movement behaviour (i.e., light-intensity physical activity, MVPA, sedentary behaviour, sleep)
-  mutate(general_movement_behaviour = case_when(
-    domain_specific_movement_behaviour %in% c("Unstructured Leisure Time Light-Intensity Physical Activity", "Work and Household Light-Intensity Physical Activity") ~ "Light-Intensity Physical Activity",
-    domain_specific_movement_behaviour %in% c("Active Transportation", "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity") ~ "Moderate- to Vigorous- Intensity Physical Activity",
-    domain_specific_movement_behaviour %in% c("Leisure Time Sedentary Behaviour", "Education-Based Sedentary Behaviour", "Passive Transportation", "Recreational Screen Time", "Social-Based Sedentary Behaviour", "Self Care Sedentary Behaviour") ~ "Sedentary Behaviour",
-    domain_specific_movement_behaviour %in% "Daytime Naps" ~ "Sleep",
-    domain_specific_movement_behaviour %in% "Uncodeable Activity" ~ "Uncodeable"
-    
-  ))  
-%>% 
- wide_d14 %>%  dcast(hicid ~ c(domain_specific_movement_behaviour, general_movement_behaviour), value.var="total_minutes", fun.aggregate = sum) 
-  #Problem: I need to add my nighttimte_sleep calculation from above as a separate column and then combine it with daytime naps to get total "Sleep #"mutate(subject_nighttime_sleep = distinct(nighttime_sleep))
-wide_d14 %>% 
-  filter(is.na(domain_specific_movement_behaviour)) %>% 
-  ungroup() %>%
-  distinct(domain_main_activity, domain_secondary1_activity, domain_secondary2_activity, domain_secondary3_activity)
+#Calculate Nighttime Sleep 
+#Make variable for subjects who went to sleep before midnight
+sleep_before_midnight <- !is.na(wide_d14$sleep_time_num) & wide_d14$sleep_time_num > 43200
+#Make variable for subjects who went to sleep after midnight 
+sleep_after_midnight <- !is.na(wide_d14$sleep_time_num) & wide_d14$sleep_time_num <= 43200
 
+#For subjects who went to sleep before midnight, subtract their sleep time from 86400 
+sleep_to_midnight_calculation <- 86400 - wide_d14$sleep_time_num[sleep_before_midnight]
+#For the same subjects, add above calculation to their wake time to get their total sleep time 
+total_sleep_before_midnight <- wide_d14$awake_time_num[sleep_before_midnight] + sleep_to_midnight_calculation
+#Put calculation into dataset 
+wide_d14$sleep_time_num[sleep_before_midnight] <- total_sleep_before_midnight
+hist(total_sleep_before_midnight)
+#For subjects who went to sleep after midnight, subtract sleep time from wake time 
+total_sleep_after_midnight <- wide_d14$awake_time_num[sleep_after_midnight] - wide_d14$sleep_time_num[sleep_after_midnight]
+#Put calculation into dataset 
+wide_d14$sleep_time_num[sleep_after_midnight] <- total_sleep_after_midnight
+hist(total_sleep_after_midnight)
+#Convert sleep time into minutes 
+nighttime_sleep <- c(total_sleep_after_midnight, total_sleep_before_midnight) / 60
+#Add nighttime sleep into dataset
+wide_d14$"Nighttime Sleep" <- (nighttime_sleep)
+
+#Add new columns for general movement behaviours
+wide_d14$"Light-Intensity Physical Activity" <- wide_d14$`Work and Household Light-Intensity Physical Activity` + wide_d14$`Unstructured Leisure Time Light-Intensity Physical Activity`
+wide_d14$"Moderate- to Vigorous- Intensity Physical Activity" <- wide_d14$`Active Transportation` + wide_d14$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d14$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
+wide_d14$"Sedentary Behaviour" <- wide_d14$`Leisure Time Sedentary Behaviour` + wide_d14$`Social-Based Sedentary Behaviour` + wide_d14$`Recreational Screen Time` + wide_d14$`Education-Based Sedentary Behaviour` + wide_d14$`Self Care Sedentary Behaviour`
+wide_d14$"Sleep" <- wide_d14$`Daytime Naps` + wide_d14$`Nighttime Sleep`
 
 ```
 

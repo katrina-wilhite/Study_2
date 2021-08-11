@@ -486,7 +486,7 @@ wide_d10$"Sleep" <- wide_d10$`Daytime Naps` + wide_d10$`Nighttime Sleep`
 rename(wide_d10, c("Light-Intensity Physical Activity at 10" = "Light-Intensity Physical Activity", "Moderate- to Vigorous- Intensity Physical Activity at 10" = "Moderate- to Vigorous- Intensity Physical Activity", "Sedentary Behaviour at 10" = "Sedentary Behaviour", "Sleep at 10" = "Sleep", "Work and Household Light-Intensity Physical Activity at 10" = "Work and Household Light-Intensity Physical Activity", "Unstructured Leisure Time Light-Intensity Physical Activity at 10" = "Unstructured Leisure Time Light-Intensity Physical Activity", "Active Transportation at 10" = "Active Transportation", "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 10" = "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 10" = "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Leisure Time Sedentary Behaviour at 10" = "Leisure Time Sedentary Behaviour", "Social-Based Sedentary Behaviour at 10" = "Social-Based Sedentary Behaviour", "Recreational Screen Time at 10" = "Recreational Screen Time", "Education-Based Sedentary Behaviour at 10" = "Education-Based Sedentary Behaviour", "Self Care Sedentary Behaviour at 10" = "Self Care Sedentary Behaviour", "Daytime Naps at 10" = "Daytime Naps", "Nighttime Sleep at 10" = "Nighttime Sleep", "Passive Transportation at 10" = "Passive Transportation", "Awake Time at 10" ="awake_time_num", "Sleep Time at 10" = "sleep_time_num", "Uncodeable Activity at 10" = "Uncodeable Activity")) -> wide_d10
 ```
 
-```{Imputed TUD10 missing data}
+```{r}
 #Taren please start here
 #install.packages("janitor")
 #Impute Missing Data with mice package, clean names to remove spaces, select "cart" method, remove ID, sleep time, and wake times as predictors
@@ -523,7 +523,7 @@ sapply(wide_d10, function(x) sum(is.na(x)))
 ```
 
 
-``` {Cluster Analysis on TUD10}
+```{r}
 #Decide how many profiles should be used for latent profile analysis 
 completed_wide_d10 %>%
   select(sedentary_behaviour_at_10, light_intensity_physical_activity_at_10, moderate_to_vigorous_intensity_physical_activity_at_10, sleep_at_10) %>% 
@@ -532,14 +532,14 @@ completed_wide_d10 %>%
                     covariances = c("zero", "varying", "zero", "equal"))%>% 
   compare_solutions (statistics = c("AIC", "BIC"))
 
-#Results say Model 6 with 5 classes is the best fit solution. 
+#Results say Model 6 with 4 classes is the best fit solution. 
 completed_wide_d10 %>% 
   select(sedentary_behaviour_at_10, light_intensity_physical_activity_at_10, moderate_to_vigorous_intensity_physical_activity_at_10, sleep_at_10) %>% 
-  estimate_profiles(5, 
+  estimate_profiles(4, 
                     variances = "varying",
                     covariances = "varying") %>% 
   plot_profiles()
-
+#Next step would be to put this in table form so the data is easier to visualize
 ```
 
 
@@ -970,15 +970,51 @@ nighttime_sleep <- c(total_sleep_after_midnight, total_sleep_before_midnight) / 
 wide_d12$"Nighttime Sleep" <- (nighttime_sleep)
 
 #Add new columns for general movement behaviours
-wide_d12$"Light-Intensity Physical Activity" <- wide_d12$`Work and Household Light-Intensity Physical Activity` + wide_d12$`Unstructured Leisure Time Light-Intensity Physical Activity`
-wide_d12$"Moderate- to Vigorous- Intensity Physical Activity" <- wide_d12$`Active Transportation` + wide_d12$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d12$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
+wide_d12$"Light-Intensity Physical Activity" <- wide_d12$`Active Transportation` + wide_d12$`Work and Household Light-Intensity Physical Activity` + wide_d12$`Unstructured Leisure Time Light-Intensity Physical Activity`
+wide_d12$"Moderate- to Vigorous- Intensity Physical Activity" <-  wide_d12$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d12$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
 wide_d12$"Sedentary Behaviour" <- wide_d12$`Leisure Time Sedentary Behaviour` + wide_d12$`Social-Based Sedentary Behaviour` + wide_d12$`Recreational Screen Time` + wide_d12$`Education-Based Sedentary Behaviour` + wide_d12$`Self Care Sedentary Behaviour`
 wide_d12$"Sleep" <- wide_d12$`Daytime Naps` + wide_d12$`Nighttime Sleep`
 
-rename(wide_d12, c("Light-Intensity Physical Activity at 12" = "Light-Intensity Physical Activity", "Moderate- to Vigorous- Intensity Physical Activity at 12" = "Moderate- to Vigorous- Intensity Physical Activity", "Sedentary Behaviour at 12" = "Sedentary Behaviour", "Sleep at 12" = "Sleep", "Work and Household Light-Intensity Physical Activity at 12" = "Work and Household Light-Intensity Physical Activity", "Unstructured Leisure Time Light-Intensity Physical Activity at 12" = "Unstructured Leisure Time Light-Intensity Physical Activity", "Active Transportation at 12" = "Active Transportation", "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 12" = "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 12" = "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Leisure Time Sedentary Behaviour at 12" = "Leisure Time Sedentary Behaviour", "Social-Based Sedentary Behaviour at 12" = "Social-Based Sedentary Behaviour", "Recreational Screen Time at 12" = "Recreational Screen Time", "Education-Based Sedentary Behaviour at 12" = "Education-Based Sedentary Behaviour", "Self Care Sedentary Behaviour at 12" = "Self Care Sedentary Behaviour", "Daytime Naps at 12" = "Daytime Naps", "Nighttime Sleep at 12" = "Nighttime Sleep", "Passive Transportation at 12" = "Passive Transportation", "Awake Time at 12" ="awake_time_num", "Sleep Time at 12" = "sleep_time_num", "Uncodeable Activity at 12" = "Uncodeable Activity"))
+rename(wide_d12, c("Light-Intensity Physical Activity at 12" = "Light-Intensity Physical Activity", "Moderate- to Vigorous- Intensity Physical Activity at 12" = "Moderate- to Vigorous- Intensity Physical Activity", "Sedentary Behaviour at 12" = "Sedentary Behaviour", "Sleep at 12" = "Sleep", "Work and Household Light-Intensity Physical Activity at 12" = "Work and Household Light-Intensity Physical Activity", "Unstructured Leisure Time Light-Intensity Physical Activity at 12" = "Unstructured Leisure Time Light-Intensity Physical Activity", "Active Transportation at 12" = "Active Transportation", "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 12" = "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 12" = "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Leisure Time Sedentary Behaviour at 12" = "Leisure Time Sedentary Behaviour", "Social-Based Sedentary Behaviour at 12" = "Social-Based Sedentary Behaviour", "Recreational Screen Time at 12" = "Recreational Screen Time", "Education-Based Sedentary Behaviour at 12" = "Education-Based Sedentary Behaviour", "Self Care Sedentary Behaviour at 12" = "Self Care Sedentary Behaviour", "Daytime Naps at 12" = "Daytime Naps", "Nighttime Sleep at 12" = "Nighttime Sleep", "Passive Transportation at 12" = "Passive Transportation", "Awake Time at 12" ="awake_time_num", "Sleep Time at 12" = "sleep_time_num", "Uncodeable Activity at 12" = "Uncodeable Activity")) -> wide_d12
 
 
 ```
+
+```{r}
+#install.packages("janitor")
+#Impute Missing Data with mice package, clean names to remove spaces, select "cart" method, remove ID, sleep time, and wake times as predictors
+ini <- mice(clean_names(wide_d12), maxit=0)
+pred <- ini$pred
+pred[, c("hicid", "awake_time_at_12", "sleep_time_at_12")] <- 0
+mice(clean_names(wide_d12), method = "cart", pred=pred) -> imputed_wide_d12
+#Check imputed data for a variable
+imputed_wide_d12$imp$passive_transportation_at_12
+#Save imputed dataset
+completed_wide_d12 <- complete(imputed_wide_d12, 1)
+#Check that imputed variables are plausible 
+stripplot(imputed_wide_d12, pch = 20, cex = 1.2)
+#Imputed values look reasonable! Woo hoooooo!!!!
+
+summary(wide_d12)
+#When I run the basic formula it gives me this error message: "Error in str2lang(x) : <text>:1:17: unexpected symbol 1: hicid ~ 0+Awake Time ^". I clicked 'Show Traceback' and tried using the make.formula function, but that didn't help. 
+?mice
+str(wide_d12)
+
+#Check pattern of missing data 
+md.pattern(wide_d12)
+ 
+
+#install.packages("VIM")
+library("VIM")
+#use plot to visualize missing data 
+aggr_plot <- aggr(wide_d12, col=c('navyblue','red'), numbers=TRUE, sortVars=TRUE, labels=names(data), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
+ 
+
+#Table of missing data 
+sapply(wide_d12, function(x) sum(is.na(x)))
+
+```
+
 
 ``` {r} 
 #Code from 20JULY2020
@@ -1406,12 +1442,46 @@ nighttime_sleep <- c(total_sleep_after_midnight, total_sleep_before_midnight) / 
 wide_d14$"Nighttime Sleep" <- (nighttime_sleep)
 
 #Add new columns for general movement behaviours
-wide_d14$"Light-Intensity Physical Activity" <- wide_d14$`Work and Household Light-Intensity Physical Activity` + wide_d14$`Unstructured Leisure Time Light-Intensity Physical Activity`
-wide_d14$"Moderate- to Vigorous- Intensity Physical Activity" <- wide_d14$`Active Transportation` + wide_d14$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d14$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
+wide_d14$"Light-Intensity Physical Activity" <- wide_d14$`Active Transportation` + wide_d14$`Work and Household Light-Intensity Physical Activity` + wide_d14$`Unstructured Leisure Time Light-Intensity Physical Activity`
+wide_d14$"Moderate- to Vigorous- Intensity Physical Activity" <-  wide_d14$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d14$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
 wide_d14$"Sedentary Behaviour" <- wide_d14$`Leisure Time Sedentary Behaviour` + wide_d14$`Social-Based Sedentary Behaviour` + wide_d14$`Recreational Screen Time` + wide_d14$`Education-Based Sedentary Behaviour` + wide_d14$`Self Care Sedentary Behaviour`
 wide_d14$"Sleep" <- wide_d14$`Daytime Naps` + wide_d14$`Nighttime Sleep`
 
-rename(wide_d14, c("Light-Intensity Physical Activity at 14" = "Light-Intensity Physical Activity", "Moderate- to Vigorous- Intensity Physical Activity at 14" = "Moderate- to Vigorous- Intensity Physical Activity", "Sedentary Behaviour at 14" = "Sedentary Behaviour", "Sleep at 14" = "Sleep", "Work and Household Light-Intensity Physical Activity at 14" = "Work and Household Light-Intensity Physical Activity", "Unstructured Leisure Time Light-Intensity Physical Activity at 14" = "Unstructured Leisure Time Light-Intensity Physical Activity", "Active Transportation at 14" = "Active Transportation", "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 14" = "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 14" = "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Leisure Time Sedentary Behaviour at 14" = "Leisure Time Sedentary Behaviour", "Social-Based Sedentary Behaviour at 14" = "Social-Based Sedentary Behaviour", "Recreational Screen Time at 14" = "Recreational Screen Time", "Education-Based Sedentary Behaviour at 14" = "Education-Based Sedentary Behaviour", "Self Care Sedentary Behaviour at 14" = "Self Care Sedentary Behaviour", "Daytime Naps at 14" = "Daytime Naps", "Nighttime Sleep at 14" = "Nighttime Sleep", "Passive Transportation at 14" = "Passive Transportation", "Awake Time at 14" ="awake_time_num", "Sleep Time at 14" = "sleep_time_num", "Uncodeable Activity at 14" = "Uncodeable Activity"))
+rename(wide_d14, c("Light-Intensity Physical Activity at 14" = "Light-Intensity Physical Activity", "Moderate- to Vigorous- Intensity Physical Activity at 14" = "Moderate- to Vigorous- Intensity Physical Activity", "Sedentary Behaviour at 14" = "Sedentary Behaviour", "Sleep at 14" = "Sleep", "Work and Household Light-Intensity Physical Activity at 14" = "Work and Household Light-Intensity Physical Activity", "Unstructured Leisure Time Light-Intensity Physical Activity at 14" = "Unstructured Leisure Time Light-Intensity Physical Activity", "Active Transportation at 14" = "Active Transportation", "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 14" = "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 14" = "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Leisure Time Sedentary Behaviour at 14" = "Leisure Time Sedentary Behaviour", "Social-Based Sedentary Behaviour at 14" = "Social-Based Sedentary Behaviour", "Recreational Screen Time at 14" = "Recreational Screen Time", "Education-Based Sedentary Behaviour at 14" = "Education-Based Sedentary Behaviour", "Self Care Sedentary Behaviour at 14" = "Self Care Sedentary Behaviour", "Daytime Naps at 14" = "Daytime Naps", "Nighttime Sleep at 14" = "Nighttime Sleep", "Passive Transportation at 14" = "Passive Transportation", "Awake Time at 14" ="awake_time_num", "Sleep Time at 14" = "sleep_time_num", "Uncodeable Activity at 14" = "Uncodeable Activity")) -> wide_d14
+
+```
+```{r}
+#install.packages("janitor")
+#Impute Missing Data with mice package, clean names to remove spaces, select "cart" method, remove ID, sleep time, and wake times as predictors
+ini <- mice(clean_names(wide_d14), maxit=0)
+pred <- ini$pred
+pred[, c("hicid", "awake_time_at_14", "sleep_time_at_14")] <- 0
+mice(clean_names(wide_d14), method = "cart", pred=pred) -> imputed_wide_d14
+#Check imputed data for a variable
+imputed_wide_d14$imp$passive_transportation_at_14
+#Save imputed dataset
+completed_wide_d14 <- complete(imputed_wide_d14, 1)
+#Check that imputed variables are plausible 
+stripplot(imputed_wide_d14, pch = 20, cex = 1.2)
+#Imputed values look reasonable! Woo hoooooo!!!!
+
+summary(wide_d14)
+#When I run the basic formula it gives me this error message: "Error in str2lang(x) : <text>:1:17: unexpected symbol 1: hicid ~ 0+Awake Time ^". I clicked 'Show Traceback' and tried using the make.formula function, but that didn't help. 
+?mice
+str(wide_d14)
+
+#Check pattern of missing data 
+md.pattern(wide_d14)
+ 
+
+#install.packages("VIM")
+library("VIM")
+#use plot to visualize missing data 
+aggr_plot <- aggr(wide_d14, col=c('navyblue','red'), numbers=TRUE, sortVars=TRUE, labels=names(data), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
+ 
+
+#Table of missing data 
+sapply(wide_d14, function(x) sum(is.na(x)))
 
 ```
 

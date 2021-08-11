@@ -524,7 +524,7 @@ sapply(wide_d10, function(x) sum(is.na(x)))
 
 
 ```{r}
-#Decide how many profiles should be used for latent profile analysis 
+#Decide how many profiles should be used for latent profile analysis for general movement behaviours 
 completed_wide_d10 %>%
   select(sedentary_behaviour_at_10, light_intensity_physical_activity_at_10, moderate_to_vigorous_intensity_physical_activity_at_10, sleep_at_10) %>% 
   estimate_profiles(1:6,
@@ -540,6 +540,24 @@ completed_wide_d10 %>%
                     covariances = "varying") %>% 
   plot_profiles()
 #Next step would be to put this in table form so the data is easier to visualize
+
+#Decide how many profiles should be used for latent profile analysis for domain-specific movement behaviours 
+completed_wide_d10 %>%
+  select(unstructured_leisure_time_light_intensity_physical_activity_at_10, work_and_household_light_intensity_physical_activity_at_10, active_transportation_at_10, structured_leisure_time_moderate_to_vigorous_intensity_physical_activity_at_10, unstructured_leisure_time_moderate_to_vigorous_intensity_physical_activity_at_10, education_based_sedentary_behaviour_at_10, leisure_time_sedentary_behaviour_at_10, passive_transportation_at_10, recreational_screen_time_at_10, social_based_sedentary_behaviour_at_10, daytime_naps_at_10, nighttime_sleep_at_10) %>% 
+  estimate_profiles(1:6,
+                    variances = c("equal", "varying", "varying", "equal"),
+                    covariances = c("zero", "varying", "zero", "equal"))%>% 
+  compare_solutions (statistics = c("AIC", "BIC"))
+
+#Results say Model 3 with 6 classes is the best fit solution. 
+completed_wide_d10 %>% 
+  select(sedentary_behaviour_at_10, light_intensity_physical_activity_at_10, moderate_to_vigorous_intensity_physical_activity_at_10, sleep_at_10) %>% 
+  estimate_profiles(6, 
+                    variances = "equal",
+                    covariances = "equal") %>% 
+  plot_profiles()
+#Next step would be to put this in table form so the data is easier to visualize
+
 ```
 
 

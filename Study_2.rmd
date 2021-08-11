@@ -1504,86 +1504,25 @@ sapply(wide_d14, function(x) sum(is.na(x)))
 ```
 
 ```{r}
-#Code from 30JULY2021: Goal is to Assign Participants' Activities to General Movement Behaviours
-#Step 1: Assign LSAC activity codes to domain-specific movement behaviour variables
-unstr_lt_lightpa <- c(d10$mainact[c(454, 463, 464, 465, 466, 491, 450, 451)], d10$secact1[c(454, 463, 464, 465, 466, 491, 450, 451)], d10$secact2[c(454, 463, 464, 465, 466, 491, 450, 451)], d10$secact3[c(454, 463, 464, 465, 466, 491, 450, 451)])
-wrk_hh_pa <- c(d10$mainact[c(1,11,31,41,51, 61, 71, 82, 83, 84, 91, 201, 211, 221,231,301, 311, 321, 331, 341, 342, 344, 351, 361, 362, 363, 364, 365, 366, 367, 368, 371, 381)], d10$secact1[c(1,11,31,41,51, 61, 71, 82, 83, 84, 91, 201, 211, 221,231,301, 311, 321, 331, 341, 342, 344, 351, 361, 362, 363, 364, 365, 366, 367, 368, 371, 381)], d10$secact2[c(1,11,31,41,51, 61, 71, 82, 83, 84, 91, 201, 211, 221,231,301, 311, 321, 331, 341, 342, 344, 351, 361, 362, 363, 364, 365, 366, 367, 368, 371, 381)], d10$secact3[c(1,11,31,41,51, 61, 71, 82, 83, 84, 91, 201, 211, 221,231,301, 311, 321, 331, 341, 342, 344, 351, 361, 362, 363, 364, 365, 366, 367, 368, 371, 381)])
-active_trans <- c(d10$mainact[c(901, 911)], d10$secact1[c(901, 911)], d10$secact2[c(901, 911)], d10$secact3[c(901, 911)])
-str_lt_mvpa <- c(d10$mainact[c(401, 402, 403, 404, 405, 406, 407, 408, 411, 412, 413, 414, 415, 416, 417, 418, 430, 440)], d10$secact1[c(401, 402, 403, 404, 405, 406, 407, 408, 411, 412, 413, 414, 415, 416, 417, 418, 430, 440)], d10$secact2[c(401, 402, 403, 404, 405, 406, 407, 408, 411, 412, 413, 414, 415, 416, 417, 418, 430, 440)], d10$secact3[c(401, 402, 403, 404, 405, 406, 407, 408, 411, 412, 413, 414, 415, 416, 417, 418, 430, 440)])
-unstr_lt_mvpa <- c(d10$mainact[c(421, 422, 423, 424, 425, 426, 427, 428)], d10$secact1[c(421, 422, 423, 424, 425, 426, 427, 428)], d10$secact2[c(421, 422, 423, 424, 425, 426, 427, 428)], d10$secact3[c(421, 422, 423, 424, 425, 426, 427, 428)])
-education_sb <- c(d10$mainact[c(21, 81, 501, 521, 531, 541, 581, 601, 701)], d10$secact1[c(21, 81, 501, 521, 531, 541, 581, 601, 701)], d10$secact2[c(21, 81, 501, 521, 531, 541, 581, 601, 701)], d10$secact3[c(21, 81, 501, 521, 531, 541, 581, 601, 701)])
-lt_sb <- c(d10$mainact[c(281, 312, 981, 481, 462, 101, 511, 542, 543, 544, 545, 548, 551, 552, 555, 561, 591, 452, 453, 455, 456, 457, 458, 471, 472, 473)], d10$secact1[c(281, 312, 981, 481, 462, 101, 511, 542, 543, 544, 545, 548, 551, 552, 555, 561, 591, 452, 453, 455, 456, 457, 458, 471, 472, 473)], d10$secact2[c(281, 312, 981, 481, 462, 101, 511, 542, 543, 544, 545, 548, 551, 552, 555, 561, 591, 452, 453, 455, 456, 457, 458, 471, 472, 473)], d10$secact3[c(281, 312, 981, 481, 462, 101, 511, 542, 543, 544, 545, 548, 551, 552, 555, 561, 591, 452, 453, 455, 456, 457, 458, 471, 472, 473)])
-passive_trans <- c(d10$mainact[c(921, 931, 941)], d10$secact1[c(921, 931, 941)], d10$secact2[c(921, 931, 941)], d10$secact3[c(921, 931, 941)])
-recreational_screentime <- c(d10$mainact[c(461, 611, 612, 621, 631, 641, 651, 661, 671, 681, 691, 841, 851)], d10$secact1[c(461, 611, 612, 621, 631, 641, 651, 661, 671, 681, 691, 841, 851)], d10$secact2[c(461, 611, 612, 621, 631, 641, 651, 661, 671, 681, 691, 841, 851)], d10$secact3[c(461, 611, 612, 621, 631, 641, 651, 661, 671, 681, 691, 841, 851)])
-selfcare_sb <- c(d10$mainact[c(241, 251, 261, 271)], d10$secact1[c(241, 251, 261, 271)], d10$secact2[c(241, 251, 261, 271)], d10$secact3[c(241, 251, 261, 271)])
-social_sb <- c(d10$mainact[c(802, 811, 821, 831, 861, 871, 881)], d10$secact1[c(802, 811, 821, 831, 861, 871, 881)], d10$secact2[c(802, 811, 821, 831, 861, 871, 881)], d10$secact3[c(802, 811, 821, 831, 861, 871, 881)])
-daytime_naps <- c(d10$mainact[571], d10$secact1[571], d10$secact2[571], d10$secact3[571])
-sleep_before_midnight <- 86400 - (d10$sleep_time_num[d10$sleep_time_num > 43200])
-sleep_after_midnight <- d10$sleep_time_num[d10$sleep_time_num >= 0 & d10$sleep_time_num < 43200]
-total_sleep_before_midnight <- d10$awake[sleep_before_midnight] + sleep_before_midnight
-total_sleep_after_midnight <- d10$awake[sleep_after_midnight] - d10$sleep_time_num[sleep_after_midnight]
-nighttime_sleep <- c(total_sleep_after_midnight, total_sleep_before_midnight) * 60
-uncodeable_activity <- c(d10$mainact[c(971, 991, 998)], d10$secact1[c(971, 991, 998)], d10$secact2[c(971, 991, 998)], d10$secact3[c(971, 991, 998)])
-#Step 2: Make "main only" physical activity and sedentary behaviours for activities that only have main activties recorded 
-no_secact <- c(d10$secact1[d10$secact1 == -9], d10$secact2[d10$secact2 == -9], d10$secact1[d10$secact3 == -9])
-#I cannot figure out how to select light physical activities and filter them by having -9 as the secondary activity; I tried the below code and tried different types of filtering
-main_lightpa <- (c(unstr_lt_lightpa, wrk_hh_pa) & no_secact)
-#Step 3: Make "decision" rule variables for activities that have secondary activities (consider some secondary activities will conflict with the movement behaviour of the main activity) 
-
-#Step 4: Make General movement behaviour variables by adding "main only" variables and "decision" variables into their appropriate movement behaviour
-general_sleep <- c(nighttime_sleep,daytime_naps)
-
+#Impute missing longitudinal data 
+#Combine the 3 time-use diaries 
+merge(completed_wide_d10, completed_wide_d12, by ="hicid", all = T) -> completed_wide_d10_d12_merge
+merged_TUD <- merge(completed_wide_d10_d12_merge, completed_wide_d14, by = "hicid", all =T)
+#Impute missing data using mice 
+ini <- mice(merged_TUD, maxit=0)
+pred <- ini$pred
+pred[, c("hicid", "awake_time_at_10", "sleep_time_at_10")] <- 0
+mice(merged_TUD, method = "cart", pred=pred) -> imputed_merged_TUD
+#Save imputed dataset
+completed_merged_TUD <- complete(imputed_merged_TUD, 1)
+#Check that imputed variables are plausible 
+densityplot(imputed_merged_TUD)
+#Imputed values look reasonable! Woo hoooooo!!!!
 ```
 
 ```{r}
-#Attempt 2 Code from 30JULY2021: Goal is to Assign Participants' Activities to General Movement Behaviours
-#Step 1: Assign LSAC activity codes to domain-specific movement behaviour variables; separate by main activity, and secondary activities 
-if(d10$mainact == d10$mainact[c(454, 463, 464, 465, 466, 491, 450, 451)]) {
-  unstr_lt_lightpa_main
-}
-unstr_lt_lightpa_main <- d10$mainact[c(454, 463, 464, 465, 466, 491, 450, 451)]
-unstr_lt_lightpa_secact1 <- d10$secact1[c(454, 463, 464, 465, 466, 491, 450, 451)]
-unstr_lt_lightpa_secact2 <- d10$secact2[c(454, 463, 464, 465, 466, 491, 450, 451)]
-unstr_lt_lightpa_secact3 <- d10$secact3[c(454, 463, 464, 465, 466, 491, 450, 451)]
-wrk_hh_pa_main <- d10$mainact[c(1,11,31,41,51, 61, 71, 82, 83, 84, 91, 201, 211, 221,231,301, 311, 321, 331, 341, 342, 344, 351, 361, 362, 363, 364, 365, 366, 367, 368, 371, 381)]
-wrk_hh_pa_secact1 <- d10$secact1[c(1,11,31,41,51, 61, 71, 82, 83, 84, 91, 201, 211, 221,231,301, 311, 321, 331, 341, 342, 344, 351, 361, 362, 363, 364, 365, 366, 367, 368, 371, 381)]
-wrk_hh_pa_secact2 <- d10$secact2[c(1,11,31,41,51, 61, 71, 82, 83, 84, 91, 201, 211, 221,231,301, 311, 321, 331, 341, 342, 344, 351, 361, 362, 363, 364, 365, 366, 367, 368, 371, 381)]
-wrk_hh_pa_secact3 <- d10$secact3[c(1,11,31,41,51, 61, 71, 82, 83, 84, 91, 201, 211, 221,231,301, 311, 321, 331, 341, 342, 344, 351, 361, 362, 363, 364, 365, 366, 367, 368, 371, 381)]
-active_trans_main <- d10$mainact[c(901, 911)]
-active_trans_secact1 <- d10$secact1[c(901, 911)]
-active_trans_secact2 <- d10$secact2[c(901, 911)]
-active_trans_secact3 <- d10$secact3[c(901, 911)]
-str_lt_mvpa <- c(d10$mainact[c(401, 402, 403, 404, 405, 406, 407, 408, 411, 412, 413, 414, 415, 416, 417, 418, 430, 440)], d10$secact1[c(401, 402, 403, 404, 405, 406, 407, 408, 411, 412, 413, 414, 415, 416, 417, 418, 430, 440)], d10$secact2[c(401, 402, 403, 404, 405, 406, 407, 408, 411, 412, 413, 414, 415, 416, 417, 418, 430, 440)], d10$secact3[c(401, 402, 403, 404, 405, 406, 407, 408, 411, 412, 413, 414, 415, 416, 417, 418, 430, 440)])
-unstr_lt_mvpa <- c(d10$mainact[c(421, 422, 423, 424, 425, 426, 427, 428)], d10$secact1[c(421, 422, 423, 424, 425, 426, 427, 428)], d10$secact2[c(421, 422, 423, 424, 425, 426, 427, 428)], d10$secact3[c(421, 422, 423, 424, 425, 426, 427, 428)])
-education_sb <- c(d10$mainact[c(21, 81, 501, 521, 531, 541, 581, 601, 701)], d10$secact1[c(21, 81, 501, 521, 531, 541, 581, 601, 701)], d10$secact2[c(21, 81, 501, 521, 531, 541, 581, 601, 701)], d10$secact3[c(21, 81, 501, 521, 531, 541, 581, 601, 701)])
-lt_sb <- c(d10$mainact[c(281, 312, 981, 481, 462, 101, 511, 542, 543, 544, 545, 548, 551, 552, 555, 561, 591, 452, 453, 455, 456, 457, 458, 471, 472, 473)], d10$secact1[c(281, 312, 981, 481, 462, 101, 511, 542, 543, 544, 545, 548, 551, 552, 555, 561, 591, 452, 453, 455, 456, 457, 458, 471, 472, 473)], d10$secact2[c(281, 312, 981, 481, 462, 101, 511, 542, 543, 544, 545, 548, 551, 552, 555, 561, 591, 452, 453, 455, 456, 457, 458, 471, 472, 473)], d10$secact3[c(281, 312, 981, 481, 462, 101, 511, 542, 543, 544, 545, 548, 551, 552, 555, 561, 591, 452, 453, 455, 456, 457, 458, 471, 472, 473)])
-passive_trans <- c(d10$mainact[c(921, 931, 941)], d10$secact1[c(921, 931, 941)], d10$secact2[c(921, 931, 941)], d10$secact3[c(921, 931, 941)])
-recreational_screentime <- c(d10$mainact[c(461, 611, 612, 621, 631, 641, 651, 661, 671, 681, 691, 841, 851)], d10$secact1[c(461, 611, 612, 621, 631, 641, 651, 661, 671, 681, 691, 841, 851)], d10$secact2[c(461, 611, 612, 621, 631, 641, 651, 661, 671, 681, 691, 841, 851)], d10$secact3[c(461, 611, 612, 621, 631, 641, 651, 661, 671, 681, 691, 841, 851)])
-selfcare_sb <- c(d10$mainact[c(241, 251, 261, 271)], d10$secact1[c(241, 251, 261, 271)], d10$secact2[c(241, 251, 261, 271)], d10$secact3[c(241, 251, 261, 271)])
-social_sb <- c(d10$mainact[c(802, 811, 821, 831, 861, 871, 881)], d10$secact1[c(802, 811, 821, 831, 861, 871, 881)], d10$secact2[c(802, 811, 821, 831, 861, 871, 881)], d10$secact3[c(802, 811, 821, 831, 861, 871, 881)])
-daytime_naps <- c(d10$mainact[571], d10$secact1[571], d10$secact2[571], d10$secact3[571])
-sleep_before_midnight <- 86400 - (d10$sleep_time_num[d10$sleep_time_num > 43200])
-sleep_after_midnight <- d10$sleep_time_num[d10$sleep_time_num >= 0 & d10$sleep_time_num < 43200]
-total_sleep_before_midnight <- d10$awake[sleep_before_midnight] + sleep_before_midnight
-total_sleep_after_midnight <- d10$awake[sleep_after_midnight] - d10$sleep_time_num[sleep_after_midnight]
-nighttime_sleep <- c(total_sleep_after_midnight, total_sleep_before_midnight) * 60
-uncodeable_activity <- c(d10$mainact[c(971, 991, 998)], d10$secact1[c(971, 991, 998)], d10$secact2[c(971, 991, 998)], d10$secact3[c(971, 991, 998)])
-#Step 2: Make "main only" physical activity and sedentary behaviours for activities that only have main activties recorded 
-no_secact1 <- d10$secact1[d10$secact1 == -9]
-no_secact2 <- d10$secact2[d10$secact2 == -9]
-no_secact3 <- d10$secact1[d10$secact3 == -9]
-#I cannot figure out how to select light physical activities and filter them by having -9 as the secondary activity; I tried the below code and tried different types of filtering
-main_lightpa <- c(unstr_lt_lightpa_main, wrk_hh_pa_main)
-main_lightpa_nosecact <- main_lightpa[no_secact1] & main_lightpa[no_secact2] & main_lightpa[no_secact3]
-#Step 3: Make "decision" rule variables for activities that have secondary activities (consider some secondary activities will conflict with the movement behaviour of the main activity) 
 
-#Step 4: Make General movement behaviour variables by adding "main only" variables and "decision" variables into their appropriate movement behaviour
-general_sleep <- c(nighttime_sleep,daytime_naps)
+example_multitrajectory_code <- read_sav("C:/Users/katri/Documents/ACU/Study_2/Multiple Traj Data_health_outcomes_wide.sav")
 
-```
-
-```{r}
-wide_d10 %>% 
-  filter(is.na("Light-Intensity Physical Activity"))
 
 ```

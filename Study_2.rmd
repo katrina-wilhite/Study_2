@@ -1,6 +1,6 @@
 ```{r}
 
-#Open package to read SPSS file and tidyLPA
+#Open packages
 library("haven")
 library("tidyLPA")
 library("dplyr")
@@ -96,11 +96,6 @@ recreational_screentime <- c(461, 611, 612, 621, 631, 641, 651, 661, 671, 681, 6
 selfcare_sb <- c(241, 251, 261, 271)
 social_sb <- c(802, 811, 821, 831, 861, 871, 881)
 daytime_naps <- 571
-sleep_before_midnight <- 86400 - (d10$sleep_time_num[d10$sleep_time_num > 43200])
-sleep_after_midnight <- d10$sleep_time_num[d10$sleep_time_num >= 0 & d10$sleep_time_num < 43200]
-total_sleep_before_midnight <- d10$awake[sleep_before_midnight] + sleep_before_midnight
-total_sleep_after_midnight <- d10$awake[sleep_after_midnight] - d10$sleep_time_num[sleep_after_midnight]
-nighttime_sleep <- c(total_sleep_after_midnight, total_sleep_before_midnight) / 60
 uncodeable_activity <- c(971, 991, 998)
 no_secact <- -9
 
@@ -497,6 +492,9 @@ wide_d10[wide_d10$total_general_movement_behaviours < 1440,]
 wide_d10[wide_d10$total_general_movement_behaviours < 1400,]
 #Yep!
 wide_d10[is.na(wide_d10$hicid),]
+#Double-check unusually large sedentary behaviours
+wide_d10[wide_d10$`Sedentary Behaviour at 10` > 900,]
+#After cross checking behaviours, I found these particiants were primarily sedentary 
 ```
 
 ```{r}
@@ -515,30 +513,19 @@ completed_wide_d10 <- complete(imputed_wide_d10, 1)
 stripplot(imputed_wide_d10, pch = 20, cex = 1.2)
 #Imputed values look reasonable! Woo hoooooo!!!!
 
-#completed_wide_d10$total_general_movement_behaviours <- completed_wide_d10$sedentary_behaviour_at_10 + completed_wide_d10$moderate_to_vigorous_intensity_physical_activity_at_10 + completed_wide_d10$light_intensity_physical_activity_at_10 + completed_wide_d10$sleep_time_at_10 + completed_wide_d10$uncodeable_activity_at_10
-
-#completed_wide_d10$total_domain_specific_movement_behaviours <- completed_wide_d10$`Active Transportation` + completed_wide_d10$`Work and Household Light-Intensity Physical Activity` + completed_wide_d10$`Unstructured Leisure Time Light-Intensity Physical Activity` + completed_wide_d10$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + completed_wide_d10$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + completed_wide_d10$`Leisure Time Sedentary Behaviour` + completed_wide_d10$`Social-Based Sedentary Behaviour` + completed_wide_d10$`Recreational Screen Time` + completed_wide_d10$`Education-Based Sedentary Behaviour` + completed_wide_d10$`Self Care Sedentary Behaviour` + completed_wide_d10$`Passive Transportation` + completed_wide_d10$`Daytime Naps` + completed_wide_d10$`Nighttime Sleep` + completed_wide_d10$`Uncodeable Activity at 10`
-
-#completed_wide_d10$total_general_movement_behaviours[completed_wide_d10$total_general_movement_behaviours == 1440]
-#completed_wide_d10$total_general_movement_behaviours[completed_wide_d10$total_general_movement_behaviours <= 1440]
-#hist(completed_wide_d10$total_general_movement_behaviours)
-
 
 #summary(wide_d10)
-#When I run the basic formula it gives me this error message: "Error in str2lang(x) : <text>:1:17: unexpected symbol 1: hicid ~ 0+Awake Time ^". I clicked 'Show Traceback' and tried using the make.formula function, but that didn't help. 
 #?mice
 #str(wide_d10)
 
 #Check pattern of missing data 
 #md.pattern(wide_d10)
  
-
 #install.packages("VIM")
 #library("VIM")
 #use plot to visualize missing data 
 #aggr_plot <- aggr(wide_d10, col=c('navyblue','red'), numbers=TRUE, sortVars=TRUE, labels=names(data), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
  
-
 #Table of missing data 
 #sapply(wide_d10, function(x) sum(is.na(x)))
 

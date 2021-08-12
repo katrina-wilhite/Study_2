@@ -9,6 +9,7 @@ library("lubridate")
 library("reshape2")
 #install.packages("mice")
 library("mice")
+library("janitor")
 ```
 
 ``` {r}
@@ -502,23 +503,23 @@ completed_wide_d10 <- complete(imputed_wide_d10, 1)
 stripplot(imputed_wide_d10, pch = 20, cex = 1.2)
 #Imputed values look reasonable! Woo hoooooo!!!!
 
-summary(wide_d10)
+#summary(wide_d10)
 #When I run the basic formula it gives me this error message: "Error in str2lang(x) : <text>:1:17: unexpected symbol 1: hicid ~ 0+Awake Time ^". I clicked 'Show Traceback' and tried using the make.formula function, but that didn't help. 
-?mice
-str(wide_d10)
+#?mice
+#str(wide_d10)
 
 #Check pattern of missing data 
-md.pattern(wide_d10)
+#md.pattern(wide_d10)
  
 
 #install.packages("VIM")
-library("VIM")
+#library("VIM")
 #use plot to visualize missing data 
-aggr_plot <- aggr(wide_d10, col=c('navyblue','red'), numbers=TRUE, sortVars=TRUE, labels=names(data), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
+#aggr_plot <- aggr(wide_d10, col=c('navyblue','red'), numbers=TRUE, sortVars=TRUE, labels=names(data), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
  
 
 #Table of missing data 
-sapply(wide_d10, function(x) sum(is.na(x)))
+#sapply(wide_d10, function(x) sum(is.na(x)))
 
 ```
 
@@ -1013,23 +1014,23 @@ completed_wide_d12 <- complete(imputed_wide_d12, 1)
 stripplot(imputed_wide_d12, pch = 20, cex = 1.2)
 #Imputed values look reasonable! Woo hoooooo!!!!
 
-summary(wide_d12)
+#summary(wide_d12)
 #When I run the basic formula it gives me this error message: "Error in str2lang(x) : <text>:1:17: unexpected symbol 1: hicid ~ 0+Awake Time ^". I clicked 'Show Traceback' and tried using the make.formula function, but that didn't help. 
-?mice
-str(wide_d12)
+#?mice
+#str(wide_d12)
 
 #Check pattern of missing data 
-md.pattern(wide_d12)
+#md.pattern(wide_d12)
  
 
 #install.packages("VIM")
-library("VIM")
+#library("VIM")
 #use plot to visualize missing data 
-aggr_plot <- aggr(wide_d12, col=c('navyblue','red'), numbers=TRUE, sortVars=TRUE, labels=names(data), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
+#aggr_plot <- aggr(wide_d12, col=c('navyblue','red'), numbers=TRUE, sortVars=TRUE, labels=names(data), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
  
 
 #Table of missing data 
-sapply(wide_d12, function(x) sum(is.na(x)))
+#sapply(wide_d12, function(x) sum(is.na(x)))
 
 ```
 
@@ -1483,23 +1484,23 @@ completed_wide_d14 <- complete(imputed_wide_d14, 1)
 stripplot(imputed_wide_d14, pch = 20, cex = 1.2)
 #Imputed values look reasonable! Woo hoooooo!!!!
 
-summary(wide_d14)
+#summary(wide_d14)
 #When I run the basic formula it gives me this error message: "Error in str2lang(x) : <text>:1:17: unexpected symbol 1: hicid ~ 0+Awake Time ^". I clicked 'Show Traceback' and tried using the make.formula function, but that didn't help. 
-?mice
-str(wide_d14)
+#?mice
+#str(wide_d14)
 
 #Check pattern of missing data 
-md.pattern(wide_d14)
+#md.pattern(wide_d14)
  
 
 #install.packages("VIM")
-library("VIM")
+#library("VIM")
 #use plot to visualize missing data 
-aggr_plot <- aggr(wide_d14, col=c('navyblue','red'), numbers=TRUE, sortVars=TRUE, labels=names(data), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
+#aggr_plot <- aggr(wide_d14, col=c('navyblue','red'), numbers=TRUE, sortVars=TRUE, labels=names(data), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
  
 
 #Table of missing data 
-sapply(wide_d14, function(x) sum(is.na(x)))
+#sapply(wide_d14, function(x) sum(is.na(x)))
 
 ```
 
@@ -1521,8 +1522,267 @@ densityplot(imputed_merged_TUD)
 ```
 
 ```{r}
+#Import Borja's data
+example_multitrajectory_code_data <- read_sav("C:/Users/katri/Documents/ACU/Study_2/Multiple Traj Data_health_outcomes_wide.sav")
 
-example_multitrajectory_code <- read_sav("C:/Users/katri/Documents/ACU/Study_2/Multiple Traj Data_health_outcomes_wide.sav")
+
+```
+
+```{r}
+#Copy Borja's code
+/*
+Borja del Pozo-Cruz & Taren Sanders
+ACU
+borja.delpozocruz@acu.edu.au
+
+21/11/2019
+*/
+
+
+/* REFERENCE MATERIAL
+	Multi-trajectories paper: https://www.andrew.cmu.edu/user/bjones/pdf/multtraj.pdf
+	Example code: https://andrewpwheeler.wordpress.com/2016/10/06/group-based-trajectory-models-in-stata-some-graphs-and-fit-statistics/
+*/
+
+// Import Data - we converted from SPSS in R
+	use "~/Downloads/Multiple Traj Data_health_outcomes_wide.sav.dta"
+
+// We don't use these, but i've left these in just in case
+	*Need to generate a set of time variables to pass to traj, just label 1 to 10
+	forval i = 1/10 { 
+	  generate t_`i' = `i'
+	}
+
+// Generate timepoint variables
+	gen t0 = 5
+	gen t1 = 8
+	gen t2 = 10
+	gen t3 = 14
+	gen t4 = 16
+	gen t5 = 20
+
+// Copied from Jo's code
+***I used code from Andrew wheeler website - code to obtain other fit statistics for deciding best model to use - ***
+	program summary_table_procTraj
+		preserve
+		*now lets look at the average posterior probability
+		gen Mp = 0
+		foreach i of varlist _traj_ProbG* {
+			replace Mp = `i' if `i' > Mp 
+		}
+		sort _traj_Group
+		*and the odds of correct classification
+		by _traj_Group: gen countG = _N
+		by _traj_Group: egen groupAPP = mean(Mp)
+		by _traj_Group: gen counter = _n
+		gen n = groupAPP/(1 - groupAPP)
+		gen p = countG/ _N
+		gen d = p/(1-p)
+		gen occ = n/d
+		*Estimated proportion for each group
+		scalar c = 0
+		gen TotProb = 0
+		foreach i of varlist _traj_ProbG* {
+		   scalar c = c + 1
+		   quietly summarize `i'
+		   replace TotProb = r(sum)/ _N if _traj_Group == c 
+		}
+		gen d_pp = TotProb/(1 - TotProb)
+		gen occ_pp = n/d_pp
+		*This displays the group number [_traj_~p], 
+		*the count per group (based on the max post prob), [countG]
+		*the average posterior probability for each group, [groupAPP]
+		*the odds of correct classification (based on the max post prob group assignment), [occ] 
+		*the odds of correct classification (based on the weighted post. prob), [occ_pp]
+		*and the observed probability of groups versus the probability [p]
+		*based on the posterior probabilities [TotProb]
+		list _traj_Group countG groupAPP occ occ_pp p TotProb if counter == 1
+		restore
+	end
+
+// Rename the orgsport variable to match format for the others	
+	rename y5_orgsport orgsport_y5
+	rename y8_orgsport orgsport_y8
+	rename y10_orgsport orgsport_y10
+	rename y13_orgsport orgsport_y13
+	rename y16_orgsport orgsport_y16
+	
+// Create a set of variables for number of observations in each row
+	egen num_sport = rownonmiss(y5_orgsport y8_orgsport y10_orgsport y13_orgsport y16_orgsport)
+	egen num_sleep = rownonmiss(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16)
+	egen num_tv = rownonmiss(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16)
+
+
+	
+// BELOW WE TESTED DIFFERENT NUMBERS OF GROUPS, BY SEX, TO SEE WHICH FIT BEST
+
+	log using "~/Downloads/Traj/log", text
+	// BOYS
+	// TWO GROUPS
+		//MODEL
+		traj if SEX==0, multgroups(2) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2) model3(logit)
+		//PLOT
+		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+		graph save Graph "~/Downloads/Traj/Boys_TWOGROUPS.gph"
+		//SUMMARY
+		summary_table_procTraj
+		
+	// THREE GROUPS
+		traj if SEX==0, multgroups(3) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2) model3(logit)
+
+		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+		graph save Graph "~/Downloads/Traj/Boys_THREGROUPS.gph"
+		summary_table_procTraj
+		
+	// FOUR GROUPS
+		traj if SEX==0, multgroups(4) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2) model3(logit)
+
+		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+		graph save Graph "~/Downloads/Traj/Boys_FOURGROUPS.gph"
+		summary_table_procTraj
+		
+	// FIVE GROUPS
+		traj if SEX==0, multgroups(5) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2 2) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2 2) model3(logit)
+
+		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+		graph save Graph "~/Downloads/Traj/Boys_FIVEGROUPS.gph"
+		summary_table_procTraj
+		
+	// SIX GROUPS
+		traj if SEX==0, multgroups(6) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2 2 2) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2 2 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2 2 2) model3(logit)
+
+		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+		graph save Graph "~/Downloads/Traj/Boys_SIXGROUPS.gph"
+		summary_table_procTraj
+
+	// GIRLS
+	// TWO GROUPS
+		traj if SEX==1, multgroups(2) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2) model3(logit)
+
+		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+		graph save Graph "~/Downloads/Traj/GIRLS_TWOGROUPS.gph"
+		summary_table_procTraj
+		
+	// THREE GROUPS
+		traj if SEX==1, multgroups(3) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2) model3(logit)
+
+		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+		graph save Graph "~/Downloads/Traj/GIRLS_THREGROUPS.gph"
+		summary_table_procTraj
+		
+	// FOUR GROUPS
+		traj if SEX==1, multgroups(4) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2) model3(logit)
+
+		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+		graph save Graph "~/Downloads/Traj/GIRLS_FOURGROUPS.gph"
+		summary_table_procTraj
+		
+	// FIVE GROUPS
+		traj if SEX==1, multgroups(5) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2 2) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2 2) model3(logit)
+
+		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+		graph save Graph "~/Downloads/Traj/GIRLS_FIVEGROUPS.gph"
+		summary_table_procTraj
+		
+	// SIX GROUPS
+		traj if SEX==1, multgroups(6) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2 2 2) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2 2 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2 2 2) model3(logit)
+
+		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+		graph save Graph "~/Downloads/Traj/GIRLS_SIXGROUPS.gph"
+		summary_table_procTraj
+			
+	// ALL
+	// TWO GROUPS
+		traj , multgroups(2) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2) model3(logit)
+
+		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+		graph save Graph "~/Downloads/Traj/ALL_TWOGROUPS.gph"
+		summary_table_procTraj
+		
+	// THREE GROUPS
+		traj , multgroups(3) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2) model3(logit)
+
+		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+		graph save Graph "~/Downloads/Traj/ALL_THREGROUPS.gph"
+		summary_table_procTraj
+		
+	// FOUR GROUPS
+		traj , multgroups(4) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2) model3(logit)
+
+		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+		graph save Graph "~/Downloads/Traj/ALL_FOURGROUPS.gph"
+		summary_table_procTraj
+		
+	// FIVE GROUPS
+		traj , multgroups(5) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2 2) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2 2) model3(logit)
+
+		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+		graph save Graph "~/Downloads/Traj/ALL_FIVEGROUPS.gph"
+		summary_table_procTraj
+		
+	// SIX GROUPS
+		traj , multgroups(6) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2 2 2) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2 2 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2 2 2) model3(logit)
+
+		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+		graph save Graph "~/Downloads/Traj/ALL_SIXGROUPS.gph"
+		summary_table_procTraj
+	log close
+
+// THESE SEEMED TO BE THE BEST MODELS FOR EACH SEX. WE TESTED DIFFERENT POLYNOMIALS AND ARRVIED AT THE BELOW.
+	// BOYS THREE LEVEL - VARYING
+		traj if SEX==0, multgroups(3) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(1 1 1) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 3 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 3 3) model3(logit)
+		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+
+
+	//GIRLS THREE LEVEL - VARYING
+		traj if SEX==1, multgroups(3) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(1 2 1) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 3 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 3 3) model3(logit)
+		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+		
+// TO TEST FOR EFFECT ON AN OUTCOME, ADD TO MODEL WITH outcome(**VARIABLE**) omodel(**DISTRIBUTION**)
+	//EXAMPLES
+	// BOYS - BODY FAT
+		traj if SEX==0, multgroups(3) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(1 1 1) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 3 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 3 3) model3(logit) outcome(A20DX_TFAT) omodel(normal)
+		
+	// GIRLS - MENTAL HEALTH	
+		traj if SEX==1, multgroups(3) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(1 2 1) model1(cnorm) min1(0) max1(12) ///
+		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 3 2) model2(cnorm) min2(0) max2(5) ///
+		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 3 3) model3(logit) outcome(A20_MCS) omodel(normal)
 
 
 ```

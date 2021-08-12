@@ -20,20 +20,15 @@ tudb14 <- read_sav("Z:/LSAC dataset/General Release/TUDs/SPSS/tudb14.sav")
 ```
 
 ``` {r}
-#Select relevant columns for each TUD
+#Select relevant columns for each TUD; alarm3 was not selected because this information is not relevant for our analyis; alarm4 will be used 
 relevantcols10 <- tudb10 %>% 
-  select(hicid, loop, awake, bed, sleep, stime, mainact, actlab, secact1, secact2, secact3, day)
+  select(hicid, loop, awake, bed, sleep, stime, mainact, actlab, secact1, secact2, secact3, day, alarm1, alarm2, alarm4)
 relevantcols12 <- tudb12 %>% 
-  select(hicid, loop, awake, bed, sleep, stime, mainact, actlab, secact1, secact2, secact3, day)
+  select(hicid, loop, awake, bed, sleep, stime, mainact, actlab, secact1, secact2, secact3, day, alarm1, alarm2, alarm4)
 relevantcols14 <- tudb14 %>% 
-  select(hicid, loop, awake, bed, sleep, stime, mainact, secact1, secact2, secact3, day)
+  select(hicid, loop, awake, bed, sleep, stime, mainact, secact1, secact2, secact3, day, alarm1, alarm2, alarm4)
 
 
-```
-
-``` {r}
-#install.packages("lubridate")
-#library("lubridate")
 ```
 
 
@@ -75,8 +70,10 @@ d10$end_time_num[next_day_finish] <- (d10$end_time_num[next_day_finish] + 86400)
 #Subtract start time from end time to get the total time spent in each activity 
 d10$total_time_num <- d10$end_time_num - d10$start_time_num
 #hist(d$total_time_num)
-#Assign typos as "NA", these will not be used in analysis; determined by activities that were >12 hours in length
-d10$total_time_num[d10$total_time_num > 43200] <- NA  
+#Assign typos as "NA", these will not be used in analysis since we cannot calculate how much time was actually spent in this activity; determined by activities that were >12 hours in length; this takes care of alarm1 
+d10$total_time_num[d10$total_time_num > 43200] <- NA 
+#Assign alarm 2 rows as NA since these activities were performed after bed time, but before awake time - therefore time spent in this activity cannot be calculated
+d10$alarm2[d10$alarm2 == 1] <- NA
 #Convert total time from seconds to minutes 
 d10$total_minutes <- d10$total_time_num %/% 60
 #Get rid of NAs for sleep time because nighttime sleep cannot be calculated, since less than 5% (6/3460) participants have missing sleep data it is OK to delete them without biasing the results 
@@ -257,7 +254,7 @@ d10_no_na %>%
     (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
     (mainact %in% social_sb & secact1 %in% active_trans & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Active Transportation",
     (mainact %in% active_trans & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Active Transportation",
-    (mainact %in% active_trans & secact1 %in% lt_sb & secact2 %in% no_secact2 & secact3 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% active_trans & secact1 %in% lt_sb & secact2 %in% no_secact & secact3 %in% no_secact) ~ "Active Transportation",
     (mainact %in% unstr_lt_mvpa & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
     (mainact %in% unstr_lt_mvpa & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
     (mainact %in% recreational_screentime & secact1 %in% lt_sb & secact2 %in% uncodeable_activity & secact3 %in% uncodeable_activity) ~ "Recreational Screen Time",
@@ -451,17 +448,17 @@ d10_no_na %>%
 long_d10 %>% 
   dcast(hicid + awake_time_num + sleep_time_num ~ c(domain_specific_movement_behaviour), value.var="total_minutes", fun.aggregate = sum) -> wide_d10
 
-is.na(long_d10$domain_specific_movement_behaviour)
-sapply(long_d10$, function(x) sum(is.na(x)))
+#s.na(long_d10$domain_specific_movement_behaviour)
+#apply(long_d10$, function(x) sum(is.na(x)))
 #Calculate Nighttime Sleep 
 #Make variable for subjects who went to sleep before midnight
 d10$sleep_time_num
-sleep_before_midnight <- !is.na(wide_d10$sleep_time_num) & wide_d10$sleep_time_num > 43200
+sleep_before_midnight <- !is.na(wide_d10$sleep_time_num) & (wide_d10$sleep_time_num > 43200)
 #Make variable for subjects who went to sleep after midnight 
-sleep_after_midnight <- !is.na(wide_d10$sleep_time_num) & wide_d10$sleep_time_num <= 43200
+sleep_after_midnight <- !is.na(wide_d10$sleep_time_num) & (wide_d10$sleep_time_num <= 43200)
 
 #For subjects who went to sleep before midnight, subtract their sleep time from 86400 
-sleep_to_midnight_calculation <- 86400 - wide_d10$sleep_time_num[sleep_before_midnight]
+sleep_to_midnight_calculation <- (86400 - wide_d10$sleep_time_num[sleep_before_midnight])
 #For the same subjects, add above calculation to their wake time to get their total sleep time 
 total_sleep_before_midnight <- wide_d10$awake_time_num[sleep_before_midnight] + sleep_to_midnight_calculation
 #Put calculation into dataset 
@@ -473,7 +470,7 @@ total_sleep_after_midnight <- wide_d10$awake_time_num[sleep_after_midnight] - wi
 wide_d10$sleep_time_num[sleep_after_midnight] <- total_sleep_after_midnight
 hist(total_sleep_after_midnight)
 #Convert sleep time into minutes 
-nighttime_sleep <- c(total_sleep_after_midnight, total_sleep_before_midnight) / 60
+nighttime_sleep <- wide_d10$sleep_time_num / 60
 #Add nighttime sleep into dataset
 wide_d10$"Nighttime Sleep" <- (nighttime_sleep)
 
@@ -481,14 +478,29 @@ wide_d10$"Nighttime Sleep" <- (nighttime_sleep)
 wide_d10$"Light-Intensity Physical Activity" <- wide_d10$`Active Transportation` + wide_d10$`Work and Household Light-Intensity Physical Activity` + wide_d10$`Unstructured Leisure Time Light-Intensity Physical Activity`
 wide_d10$"Moderate- to Vigorous- Intensity Physical Activity" <- wide_d10$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d10$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
 wide_d10$"Sedentary Behaviour" <- wide_d10$`Leisure Time Sedentary Behaviour` + wide_d10$`Social-Based Sedentary Behaviour` + wide_d10$`Recreational Screen Time` + wide_d10$`Education-Based Sedentary Behaviour` + wide_d10$`Self Care Sedentary Behaviour` + wide_d10$`Passive Transportation`
-wide_d10$"Sleep" <- wide_d10$`Daytime Naps` + wide_d10$`Nighttime Sleep`
+wide_d10$"Sleep" <- wide_d10$`Daytime Naps` + wide_d10$`Nighttime Sleep` 
 
 #Rename movement behaviour variables to be "at 10" 
 rename(wide_d10, c("Light-Intensity Physical Activity at 10" = "Light-Intensity Physical Activity", "Moderate- to Vigorous- Intensity Physical Activity at 10" = "Moderate- to Vigorous- Intensity Physical Activity", "Sedentary Behaviour at 10" = "Sedentary Behaviour", "Sleep at 10" = "Sleep", "Work and Household Light-Intensity Physical Activity at 10" = "Work and Household Light-Intensity Physical Activity", "Unstructured Leisure Time Light-Intensity Physical Activity at 10" = "Unstructured Leisure Time Light-Intensity Physical Activity", "Active Transportation at 10" = "Active Transportation", "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 10" = "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 10" = "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Leisure Time Sedentary Behaviour at 10" = "Leisure Time Sedentary Behaviour", "Social-Based Sedentary Behaviour at 10" = "Social-Based Sedentary Behaviour", "Recreational Screen Time at 10" = "Recreational Screen Time", "Education-Based Sedentary Behaviour at 10" = "Education-Based Sedentary Behaviour", "Self Care Sedentary Behaviour at 10" = "Self Care Sedentary Behaviour", "Daytime Naps at 10" = "Daytime Naps", "Nighttime Sleep at 10" = "Nighttime Sleep", "Passive Transportation at 10" = "Passive Transportation", "Awake Time at 10" ="awake_time_num", "Sleep Time at 10" = "sleep_time_num", "Uncodeable Activity at 10" = "Uncodeable Activity")) -> wide_d10
+
+#Add general movement behaviours together to see if they equal a 24 hour day (1440 minutes)
+wide_d10$total_general_movement_behaviours <- wide_d10$`Sedentary Behaviour at 10` + wide_d10$`Moderate- to Vigorous- Intensity Physical Activity at 10` + wide_d10$`Light-Intensity Physical Activity at 10` + wide_d10$`Sleep at 10` + wide_d10$`Uncodeable Activity at 10`
+#Add domain-specific movement behaviours together to see if they equal a 24 hour day (1440 minutes)
+wide_d10$total_domain_specific_movement_behaviours <- wide_d10$`Active Transportation` + wide_d10$`Work and Household Light-Intensity Physical Activity` + wide_d10$`Unstructured Leisure Time Light-Intensity Physical Activity` + wide_d10$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d10$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d10$`Leisure Time Sedentary Behaviour` + wide_d10$`Social-Based Sedentary Behaviour` + wide_d10$`Recreational Screen Time` + wide_d10$`Education-Based Sedentary Behaviour` + wide_d10$`Self Care Sedentary Behaviour` + wide_d10$`Passive Transportation` + wide_d10$`Daytime Naps` + wide_d10$`Nighttime Sleep` + wide_d10$`Uncodeable Activity`
+
+#Check to see participants total minutes in a histogram
+hist(wide_d10$total_general_movement_behaviours)
+#Participants are either at or under 1440 minutes; filter the participants who have less than 1440 minutes to figure out why this is the case
+wide_d10[wide_d10$total_general_movement_behaviours < 1440,]
+#Participants who are under 1440 minutes have different "awake time" and "start time" for their first activity; the time between these activities matched the time these participants were under a total day 
+#Check the extreme cases to see if this is still true
+wide_d10[wide_d10$total_general_movement_behaviours < 1400,]
+#Yep!
+wide_d10[is.na(wide_d10$hicid),]
 ```
 
 ```{r}
-#Taren please start here
+
 #install.packages("janitor")
 #Impute Missing Data with mice package, clean names to remove spaces, select "cart" method, remove ID, sleep time, and wake times as predictors
 ini <- mice(clean_names(wide_d10), maxit=0)
@@ -502,6 +514,15 @@ completed_wide_d10 <- complete(imputed_wide_d10, 1)
 #Check that imputed variables are plausible 
 stripplot(imputed_wide_d10, pch = 20, cex = 1.2)
 #Imputed values look reasonable! Woo hoooooo!!!!
+
+#completed_wide_d10$total_general_movement_behaviours <- completed_wide_d10$sedentary_behaviour_at_10 + completed_wide_d10$moderate_to_vigorous_intensity_physical_activity_at_10 + completed_wide_d10$light_intensity_physical_activity_at_10 + completed_wide_d10$sleep_time_at_10 + completed_wide_d10$uncodeable_activity_at_10
+
+#completed_wide_d10$total_domain_specific_movement_behaviours <- completed_wide_d10$`Active Transportation` + completed_wide_d10$`Work and Household Light-Intensity Physical Activity` + completed_wide_d10$`Unstructured Leisure Time Light-Intensity Physical Activity` + completed_wide_d10$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + completed_wide_d10$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + completed_wide_d10$`Leisure Time Sedentary Behaviour` + completed_wide_d10$`Social-Based Sedentary Behaviour` + completed_wide_d10$`Recreational Screen Time` + completed_wide_d10$`Education-Based Sedentary Behaviour` + completed_wide_d10$`Self Care Sedentary Behaviour` + completed_wide_d10$`Passive Transportation` + completed_wide_d10$`Daytime Naps` + completed_wide_d10$`Nighttime Sleep` + completed_wide_d10$`Uncodeable Activity at 10`
+
+#completed_wide_d10$total_general_movement_behaviours[completed_wide_d10$total_general_movement_behaviours == 1440]
+#completed_wide_d10$total_general_movement_behaviours[completed_wide_d10$total_general_movement_behaviours <= 1440]
+#hist(completed_wide_d10$total_general_movement_behaviours)
+
 
 #summary(wide_d10)
 #When I run the basic formula it gives me this error message: "Error in str2lang(x) : <text>:1:17: unexpected symbol 1: hicid ~ 0+Awake Time ^". I clicked 'Show Traceback' and tried using the make.formula function, but that didn't help. 
@@ -525,7 +546,7 @@ stripplot(imputed_wide_d10, pch = 20, cex = 1.2)
 
 
 ```{r}
-#Decide how many profiles should be used for latent profile analysis for general movement behaviours 
+#Decide how many profiles should be used for latent profile analysis for general movement behaviours (This is just a test to make sure this works with the dataset; we'll do a multi trajectory analysis with the longitudinal data)
 completed_wide_d10 %>%
   select(sedentary_behaviour_at_10, light_intensity_physical_activity_at_10, moderate_to_vigorous_intensity_physical_activity_at_10, sleep_at_10) %>% 
   estimate_profiles(1:6,
@@ -533,10 +554,10 @@ completed_wide_d10 %>%
                     covariances = c("zero", "varying", "zero", "equal"))%>% 
   compare_solutions (statistics = c("AIC", "BIC"))
 
-#Results say Model 6 with 4 classes is the best fit solution. 
+#Results say Model 6 with 5 classes is the best fit solution. 
 completed_wide_d10 %>% 
   select(sedentary_behaviour_at_10, light_intensity_physical_activity_at_10, moderate_to_vigorous_intensity_physical_activity_at_10, sleep_at_10) %>% 
-  estimate_profiles(4, 
+  estimate_profiles(5, 
                     variances = "varying",
                     covariances = "varying") %>% 
   plot_profiles()
@@ -552,7 +573,7 @@ completed_wide_d10 %>%
 
 #Results say Model 3 with 6 classes is the best fit solution. 
 completed_wide_d10 %>% 
-  select(sedentary_behaviour_at_10, light_intensity_physical_activity_at_10, moderate_to_vigorous_intensity_physical_activity_at_10, sleep_at_10) %>% 
+  select(unstructured_leisure_time_light_intensity_physical_activity_at_10, work_and_household_light_intensity_physical_activity_at_10, active_transportation_at_10, structured_leisure_time_moderate_to_vigorous_intensity_physical_activity_at_10, unstructured_leisure_time_moderate_to_vigorous_intensity_physical_activity_at_10, education_based_sedentary_behaviour_at_10, leisure_time_sedentary_behaviour_at_10, passive_transportation_at_10, recreational_screen_time_at_10, social_based_sedentary_behaviour_at_10, daytime_naps_at_10, nighttime_sleep_at_10) %>% 
   estimate_profiles(6, 
                     variances = "equal",
                     covariances = "equal") %>% 
@@ -586,11 +607,13 @@ d12$end_time_num[next_day_finish] <- (d12$end_time_num[next_day_finish] + 86400)
 #Subtract start time from end time to get the total time spent in each activity 
 d12$total_time_num <- d12$end_time_num - d12$start_time_num
 #hist(d$total_time_num)
-#Assign typos as "NA", these will not be used in analysis; determined by activities that were >12 hours in length
-d12$total_time_num[d12$total_time_num > 43200] <- NA  
+#Assign typos as "NA", these will not be used in analysis since we cannot calculate how much time was actually spent in this activity; determined by activities that were >12 hours in length; this takes care of alarm1 
+d12$total_time_num[d12$total_time_num > 43200] <- NA 
+#Assign alarm 2 rows as NA since these activities were performed after bed time, but before awake time - therefore time spent in this activity cannot be calculated
+d12$alarm2[d12$alarm2 == 1] <- NA
 #Convert total time from seconds to minutes 
 d12$total_minutes <- d12$total_time_num %/% 60
-#Get rid of NAs for sleep time because nighttime sleep cannot be calculated, since less than 5% (1/3058) participants have missing sleep data it is OK to delete them without biasing the results 
+#Get rid of NAs for sleep time because nighttime sleep cannot be calculated, since less than 5% (6/3460) participants have missing sleep data it is OK to delete them without biasing the results 
 d12[!is.na(d12$sleep_time_num),] -> d12_no_na
 ```
 
@@ -610,11 +633,6 @@ recreational_screentime <- c(461, 611, 612, 621, 631, 641, 651, 661, 671, 681, 6
 selfcare_sb <- c(241, 251, 261, 271)
 social_sb <- c(802, 811, 821, 831, 861, 871, 881)
 daytime_naps <- 571
-sleep_before_midnight <- 86400 - (d10$sleep_time_num[d10$sleep_time_num > 43200])
-sleep_after_midnight <- d10$sleep_time_num[d10$sleep_time_num >= 0 & d10$sleep_time_num < 43200]
-total_sleep_before_midnight <- d10$awake[sleep_before_midnight] + sleep_before_midnight
-total_sleep_after_midnight <- d10$awake[sleep_after_midnight] - d10$sleep_time_num[sleep_after_midnight]
-nighttime_sleep <- c(total_sleep_after_midnight, total_sleep_before_midnight) * 60
 uncodeable_activity <- c(971, 991, 998)
 no_secact <- -9
 
@@ -768,7 +786,7 @@ d12_no_na %>%
     (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
     (mainact %in% social_sb & secact1 %in% active_trans & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Active Transportation",
     (mainact %in% active_trans & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Active Transportation",
-    (mainact %in% active_trans & secact1 %in% lt_sb & secact2 %in% no_secact2 & secact3 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% active_trans & secact1 %in% lt_sb & secact2 %in% no_secact & secact3 %in% no_secact) ~ "Active Transportation",
     (mainact %in% unstr_lt_mvpa & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
     (mainact %in% unstr_lt_mvpa & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
     (mainact %in% recreational_screentime & secact1 %in% lt_sb & secact2 %in% uncodeable_activity & secact3 %in% uncodeable_activity) ~ "Recreational Screen Time",
@@ -965,14 +983,16 @@ d12_no_na %>%
 long_d12 %>% 
   dcast(hicid + awake_time_num + sleep_time_num ~ c(domain_specific_movement_behaviour), value.var="total_minutes", fun.aggregate = sum) -> wide_d12
 
+
 #Calculate Nighttime Sleep 
 #Make variable for subjects who went to sleep before midnight
-sleep_before_midnight <- !is.na(wide_d12$sleep_time_num) & wide_d12$sleep_time_num > 43200
+d12$sleep_time_num
+sleep_before_midnight <- !is.na(wide_d12$sleep_time_num) & (wide_d12$sleep_time_num > 43200)
 #Make variable for subjects who went to sleep after midnight 
-sleep_after_midnight <- !is.na(wide_d12$sleep_time_num) & wide_d12$sleep_time_num <= 43200
+sleep_after_midnight <- !is.na(wide_d12$sleep_time_num) & (wide_d12$sleep_time_num <= 43200)
 
 #For subjects who went to sleep before midnight, subtract their sleep time from 86400 
-sleep_to_midnight_calculation <- 86400 - wide_d12$sleep_time_num[sleep_before_midnight]
+sleep_to_midnight_calculation <- (86400 - wide_d12$sleep_time_num[sleep_before_midnight])
 #For the same subjects, add above calculation to their wake time to get their total sleep time 
 total_sleep_before_midnight <- wide_d12$awake_time_num[sleep_before_midnight] + sleep_to_midnight_calculation
 #Put calculation into dataset 
@@ -984,18 +1004,32 @@ total_sleep_after_midnight <- wide_d12$awake_time_num[sleep_after_midnight] - wi
 wide_d12$sleep_time_num[sleep_after_midnight] <- total_sleep_after_midnight
 hist(total_sleep_after_midnight)
 #Convert sleep time into minutes 
-nighttime_sleep <- c(total_sleep_after_midnight, total_sleep_before_midnight) / 60
+nighttime_sleep <- wide_d12$sleep_time_num / 60
 #Add nighttime sleep into dataset
 wide_d12$"Nighttime Sleep" <- (nighttime_sleep)
 
 #Add new columns for general movement behaviours
 wide_d12$"Light-Intensity Physical Activity" <- wide_d12$`Active Transportation` + wide_d12$`Work and Household Light-Intensity Physical Activity` + wide_d12$`Unstructured Leisure Time Light-Intensity Physical Activity`
-wide_d12$"Moderate- to Vigorous- Intensity Physical Activity" <-  wide_d12$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d12$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
-wide_d12$"Sedentary Behaviour" <- wide_d12$`Leisure Time Sedentary Behaviour` + wide_d12$`Social-Based Sedentary Behaviour` + wide_d12$`Recreational Screen Time` + wide_d12$`Education-Based Sedentary Behaviour` + wide_d12$`Self Care Sedentary Behaviour`
-wide_d12$"Sleep" <- wide_d12$`Daytime Naps` + wide_d12$`Nighttime Sleep`
+wide_d12$"Moderate- to Vigorous- Intensity Physical Activity" <- wide_d12$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d12$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
+wide_d12$"Sedentary Behaviour" <- wide_d12$`Leisure Time Sedentary Behaviour` + wide_d12$`Social-Based Sedentary Behaviour` + wide_d12$`Recreational Screen Time` + wide_d12$`Education-Based Sedentary Behaviour` + wide_d12$`Self Care Sedentary Behaviour` + wide_d12$`Passive Transportation`
+wide_d12$"Sleep" <- wide_d12$`Daytime Naps` + wide_d12$`Nighttime Sleep` 
 
+#Rename movement behaviour variables to be "at 12" 
 rename(wide_d12, c("Light-Intensity Physical Activity at 12" = "Light-Intensity Physical Activity", "Moderate- to Vigorous- Intensity Physical Activity at 12" = "Moderate- to Vigorous- Intensity Physical Activity", "Sedentary Behaviour at 12" = "Sedentary Behaviour", "Sleep at 12" = "Sleep", "Work and Household Light-Intensity Physical Activity at 12" = "Work and Household Light-Intensity Physical Activity", "Unstructured Leisure Time Light-Intensity Physical Activity at 12" = "Unstructured Leisure Time Light-Intensity Physical Activity", "Active Transportation at 12" = "Active Transportation", "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 12" = "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 12" = "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Leisure Time Sedentary Behaviour at 12" = "Leisure Time Sedentary Behaviour", "Social-Based Sedentary Behaviour at 12" = "Social-Based Sedentary Behaviour", "Recreational Screen Time at 12" = "Recreational Screen Time", "Education-Based Sedentary Behaviour at 12" = "Education-Based Sedentary Behaviour", "Self Care Sedentary Behaviour at 12" = "Self Care Sedentary Behaviour", "Daytime Naps at 12" = "Daytime Naps", "Nighttime Sleep at 12" = "Nighttime Sleep", "Passive Transportation at 12" = "Passive Transportation", "Awake Time at 12" ="awake_time_num", "Sleep Time at 12" = "sleep_time_num", "Uncodeable Activity at 12" = "Uncodeable Activity")) -> wide_d12
 
+#Add general movement behaviours together to see if they equal a 24 hour day (1440 minutes)
+wide_d12$total_general_movement_behaviours <- wide_d12$`Sedentary Behaviour at 12` + wide_d12$`Moderate- to Vigorous- Intensity Physical Activity at 12` + wide_d12$`Light-Intensity Physical Activity at 12` + wide_d12$`Sleep at 12` + wide_d12$`Uncodeable Activity at 12`
+#Add domain-specific movement behaviours together to see if they equal a 24 hour day (1440 minutes)
+wide_d12$total_domain_specific_movement_behaviours <- wide_d12$`Active Transportation` + wide_d12$`Work and Household Light-Intensity Physical Activity` + wide_d12$`Unstructured Leisure Time Light-Intensity Physical Activity` + wide_d12$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d12$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d12$`Leisure Time Sedentary Behaviour` + wide_d12$`Social-Based Sedentary Behaviour` + wide_d12$`Recreational Screen Time` + wide_d12$`Education-Based Sedentary Behaviour` + wide_d12$`Self Care Sedentary Behaviour` + wide_d12$`Passive Transportation` + wide_d12$`Daytime Naps` + wide_d12$`Nighttime Sleep` + wide_d12$`Uncodeable Activity`
+
+#Check to see participants total minutes in a histogram
+hist(wide_d12$total_general_movement_behaviours)
+#Participants are either at or under 1440 minutes; filter the participants who have less than 1440 minutes to figure out why this is the case
+wide_d12[wide_d12$total_general_movement_behaviours < 1440,]
+#Participants who are under 1440 minutes have different "awake time" and "start time" for their first activity; the time between these activities matched the time these participants were under a total day 
+#Check the extreme cases to see if this is still true
+wide_d12[wide_d12$total_general_movement_behaviours < 1400,]
+#Yep!
 
 ```
 
@@ -1059,11 +1093,13 @@ d14$end_time_num[next_day_finish] <- (d14$end_time_num[next_day_finish] + 86400)
 #Subtract start time from end time to get the total time spent in each activity 
 d14$total_time_num <- d14$end_time_num - d14$start_time_num
 #hist(d$total_time_num)
-#Assign typos as "NA", these will not be used in analysis; determined by activities that were >12 hours in length
-d14$total_time_num[d14$total_time_num > 43200] <- NA  
+#Assign typos as "NA", these will not be used in analysis since we cannot calculate how much time was actually spent in this activity; determined by activities that were >12 hours in length; this takes care of alarm1 
+d14$total_time_num[d14$total_time_num > 43200] <- NA 
+#Assign alarm 2 rows as NA since these activities were performed after bed time, but before awake time - therefore time spent in this activity cannot be calculated
+d14$alarm2[d14$alarm2 == 1] <- NA
 #Convert total time from seconds to minutes 
 d14$total_minutes <- d14$total_time_num %/% 60
-#Get rid of NAs for sleep time because nighttime sleep cannot be calculated, since less than 5% (2/2827) participants have missing sleep data it is OK to delete them without biasing the results 
+#Get rid of NAs for sleep time because nighttime sleep cannot be calculated, since less than 5% (6/3460) participants have missing sleep data it is OK to delete them without biasing the results 
 d14[!is.na(d14$sleep_time_num),] -> d14_no_na
 ```
 
@@ -1082,11 +1118,6 @@ recreational_screentime <- c(461, 611, 612, 621, 631, 641, 651, 661, 671, 681, 6
 selfcare_sb <- c(241, 251, 261, 271)
 social_sb <- c(802, 811, 821, 831, 861, 871, 881)
 daytime_naps <- 571
-sleep_before_midnight <- 86400 - (d10$sleep_time_num[d10$sleep_time_num > 43200])
-sleep_after_midnight <- d10$sleep_time_num[d10$sleep_time_num >= 0 & d10$sleep_time_num < 43200]
-total_sleep_before_midnight <- d10$awake[sleep_before_midnight] + sleep_before_midnight
-total_sleep_after_midnight <- d10$awake[sleep_after_midnight] - d10$sleep_time_num[sleep_after_midnight]
-nighttime_sleep <- c(total_sleep_after_midnight, total_sleep_before_midnight) * 60
 uncodeable_activity <- c(971, 991, 998)
 no_secact <- -9
 
@@ -1240,7 +1271,7 @@ d14_no_na %>%
     (mainact %in% lt_sb & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
     (mainact %in% social_sb & secact1 %in% active_trans & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Active Transportation",
     (mainact %in% active_trans & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Active Transportation",
-    (mainact %in% active_trans & secact1 %in% lt_sb & secact2 %in% no_secact2 & secact3 %in% no_secact) ~ "Active Transportation",
+    (mainact %in% active_trans & secact1 %in% lt_sb & secact2 %in% no_secact & secact3 %in% no_secact) ~ "Active Transportation",
     (mainact %in% unstr_lt_mvpa & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
     (mainact %in% unstr_lt_mvpa & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity",
     (mainact %in% recreational_screentime & secact1 %in% lt_sb & secact2 %in% uncodeable_activity & secact3 %in% uncodeable_activity) ~ "Recreational Screen Time",
@@ -1439,12 +1470,13 @@ long_d14 %>%
 
 #Calculate Nighttime Sleep 
 #Make variable for subjects who went to sleep before midnight
-sleep_before_midnight <- !is.na(wide_d14$sleep_time_num) & wide_d14$sleep_time_num > 43200
+d14$sleep_time_num
+sleep_before_midnight <- !is.na(wide_d14$sleep_time_num) & (wide_d14$sleep_time_num > 43200)
 #Make variable for subjects who went to sleep after midnight 
-sleep_after_midnight <- !is.na(wide_d14$sleep_time_num) & wide_d14$sleep_time_num <= 43200
+sleep_after_midnight <- !is.na(wide_d14$sleep_time_num) & (wide_d14$sleep_time_num <= 43200)
 
 #For subjects who went to sleep before midnight, subtract their sleep time from 86400 
-sleep_to_midnight_calculation <- 86400 - wide_d14$sleep_time_num[sleep_before_midnight]
+sleep_to_midnight_calculation <- (86400 - wide_d14$sleep_time_num[sleep_before_midnight])
 #For the same subjects, add above calculation to their wake time to get their total sleep time 
 total_sleep_before_midnight <- wide_d14$awake_time_num[sleep_before_midnight] + sleep_to_midnight_calculation
 #Put calculation into dataset 
@@ -1456,19 +1488,35 @@ total_sleep_after_midnight <- wide_d14$awake_time_num[sleep_after_midnight] - wi
 wide_d14$sleep_time_num[sleep_after_midnight] <- total_sleep_after_midnight
 hist(total_sleep_after_midnight)
 #Convert sleep time into minutes 
-nighttime_sleep <- c(total_sleep_after_midnight, total_sleep_before_midnight) / 60
+nighttime_sleep <- wide_d14$sleep_time_num / 60
 #Add nighttime sleep into dataset
 wide_d14$"Nighttime Sleep" <- (nighttime_sleep)
 
 #Add new columns for general movement behaviours
 wide_d14$"Light-Intensity Physical Activity" <- wide_d14$`Active Transportation` + wide_d14$`Work and Household Light-Intensity Physical Activity` + wide_d14$`Unstructured Leisure Time Light-Intensity Physical Activity`
-wide_d14$"Moderate- to Vigorous- Intensity Physical Activity" <-  wide_d14$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d14$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
-wide_d14$"Sedentary Behaviour" <- wide_d14$`Leisure Time Sedentary Behaviour` + wide_d14$`Social-Based Sedentary Behaviour` + wide_d14$`Recreational Screen Time` + wide_d14$`Education-Based Sedentary Behaviour` + wide_d14$`Self Care Sedentary Behaviour`
-wide_d14$"Sleep" <- wide_d14$`Daytime Naps` + wide_d14$`Nighttime Sleep`
+wide_d14$"Moderate- to Vigorous- Intensity Physical Activity" <- wide_d14$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d14$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
+wide_d14$"Sedentary Behaviour" <- wide_d14$`Leisure Time Sedentary Behaviour` + wide_d14$`Social-Based Sedentary Behaviour` + wide_d14$`Recreational Screen Time` + wide_d14$`Education-Based Sedentary Behaviour` + wide_d14$`Self Care Sedentary Behaviour` + wide_d14$`Passive Transportation`
+wide_d14$"Sleep" <- wide_d14$`Daytime Naps` + wide_d14$`Nighttime Sleep` 
 
+#Rename movement behaviour variables to be "at 14" 
 rename(wide_d14, c("Light-Intensity Physical Activity at 14" = "Light-Intensity Physical Activity", "Moderate- to Vigorous- Intensity Physical Activity at 14" = "Moderate- to Vigorous- Intensity Physical Activity", "Sedentary Behaviour at 14" = "Sedentary Behaviour", "Sleep at 14" = "Sleep", "Work and Household Light-Intensity Physical Activity at 14" = "Work and Household Light-Intensity Physical Activity", "Unstructured Leisure Time Light-Intensity Physical Activity at 14" = "Unstructured Leisure Time Light-Intensity Physical Activity", "Active Transportation at 14" = "Active Transportation", "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 14" = "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 14" = "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Leisure Time Sedentary Behaviour at 14" = "Leisure Time Sedentary Behaviour", "Social-Based Sedentary Behaviour at 14" = "Social-Based Sedentary Behaviour", "Recreational Screen Time at 14" = "Recreational Screen Time", "Education-Based Sedentary Behaviour at 14" = "Education-Based Sedentary Behaviour", "Self Care Sedentary Behaviour at 14" = "Self Care Sedentary Behaviour", "Daytime Naps at 14" = "Daytime Naps", "Nighttime Sleep at 14" = "Nighttime Sleep", "Passive Transportation at 14" = "Passive Transportation", "Awake Time at 14" ="awake_time_num", "Sleep Time at 14" = "sleep_time_num", "Uncodeable Activity at 14" = "Uncodeable Activity")) -> wide_d14
 
+#Add general movement behaviours together to see if they equal a 24 hour day (1440 minutes)
+wide_d14$total_general_movement_behaviours <- wide_d14$`Sedentary Behaviour at 14` + wide_d14$`Moderate- to Vigorous- Intensity Physical Activity at 14` + wide_d14$`Light-Intensity Physical Activity at 14` + wide_d14$`Sleep at 14` + wide_d14$`Uncodeable Activity at 14`
+#Add domain-specific movement behaviours together to see if they equal a 24 hour day (1440 minutes)
+wide_d14$total_domain_specific_movement_behaviours <- wide_d14$`Active Transportation` + wide_d14$`Work and Household Light-Intensity Physical Activity` + wide_d14$`Unstructured Leisure Time Light-Intensity Physical Activity` + wide_d14$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d14$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d14$`Leisure Time Sedentary Behaviour` + wide_d14$`Social-Based Sedentary Behaviour` + wide_d14$`Recreational Screen Time` + wide_d14$`Education-Based Sedentary Behaviour` + wide_d14$`Self Care Sedentary Behaviour` + wide_d14$`Passive Transportation` + wide_d14$`Daytime Naps` + wide_d14$`Nighttime Sleep` + wide_d14$`Uncodeable Activity`
+
+#Check to see participants total minutes in a histogram
+hist(wide_d14$total_general_movement_behaviours)
+#Participants are either at or under 1440 minutes; filter the participants who have less than 1440 minutes to figure out why this is the case
+wide_d14[wide_d14$total_general_movement_behaviours < 1440,]
+#Participants who are under 1440 minutes have different "awake time" and "start time" for their first activity; the time between these activities matched the time these participants were under a total day 
+#Check the extreme cases to see if this is still true
+wide_d14[wide_d14$total_general_movement_behaviours < 1400,]
+#Yep!
+
 ```
+
 ```{r}
 #install.packages("janitor")
 #Impute Missing Data with mice package, clean names to remove spaces, select "cart" method, remove ID, sleep time, and wake times as predictors
@@ -1529,20 +1577,13 @@ example_multitrajectory_code_data <- read_sav("C:/Users/katri/Documents/ACU/Stud
 ```
 
 ```{r}
-#Copy Borja's code
-/*
-Borja del Pozo-Cruz & Taren Sanders
-ACU
-borja.delpozocruz@acu.edu.au
-
-21/11/2019
-*/
+#Copy Borja's code; run it step by step to see what I can understand
 
 
-/* REFERENCE MATERIAL
-	Multi-trajectories paper: https://www.andrew.cmu.edu/user/bjones/pdf/multtraj.pdf
-	Example code: https://andrewpwheeler.wordpress.com/2016/10/06/group-based-trajectory-models-in-stata-some-graphs-and-fit-statistics/
-*/
+#/* REFERENCE MATERIAL
+#	Multi-trajectories paper: https://www.andrew.cmu.edu/user/bjones/pdf/multtraj.pdf
+#	Example code: https://andrewpwheeler.wordpress.com/2016/10/06/group-based-trajectory-models-in-stata-some-graphs-and-fit-statistics/
+#*/
 
 // Import Data - we converted from SPSS in R
 	use "~/Downloads/Multiple Traj Data_health_outcomes_wide.sav.dta"

@@ -1,6 +1,5 @@
-```{r}
-
-#Open packages
+```{r include=FALSE}
+#Open necessary packages 
 library("haven")
 library("tidyLPA")
 library("dplyr")
@@ -10,43 +9,39 @@ library("reshape2")
 #install.packages("mice")
 library("mice")
 library("janitor")
+library("crimCV")
+library("ggplot2")
+library("kableExtra")
+#install.packages("magrittr")
+library("stringr")
+library("magrittr")
 ```
 
-``` {r}
-#Read LSAc SPSS files in R
+```{r include=FALSE}
+#Read LSAc SPSS files in R (time-use diaries and general survey data)
 tudb10 <- read_sav("Z:/LSAC dataset/General Release/TUDs/SPSS/tudb10.sav")
 tudb12 <- read_sav("Z:/LSAC dataset/General Release/TUDs/SPSS/tudb12.sav")
 tudb14 <- read_sav("Z:/LSAC dataset/General Release/TUDs/SPSS/tudb14.sav")
+lsacgrb10 <- read_sav("Z:/LSAC dataset/General Release/Survey data/SPSS/lsacgrb10.sav")
 ```
 
-``` {r}
-#Select relevant columns for each TUD; alarm3 was not selected because this information is not relevant for our analyis; alarm4 will be used 
+```{r include=FALSE}
+#Select relevant columns for each TUD; alarm3 was not selected because this information is not relevant for our analyis; alarm4 will be used; select relevant columns for participant data
 relevantcols10 <- tudb10 %>% 
   select(hicid, loop, awake, bed, sleep, stime, mainact, actlab, secact1, secact2, secact3, day, alarm1, alarm2, alarm4)
 relevantcols12 <- tudb12 %>% 
   select(hicid, loop, awake, bed, sleep, stime, mainact, actlab, secact1, secact2, secact3, day, alarm1, alarm2, alarm4)
 relevantcols14 <- tudb14 %>% 
   select(hicid, loop, awake, bed, sleep, stime, mainact, secact1, secact2, secact3, day, alarm1, alarm2, alarm4)
+relevant_lsacgrb10 <- lsacgrb10 %>% 
+  select(hicid, ff03m1, zf02m1, zf12m1, fsep2, fremote) %>% 
+  rename("Age" = ff03m1, "Sex" = zf02m1, "Indigenous" = zf12m1, "SEP" = fsep2, "Remoteness" = fremote)
 
 
 ```
 
 
-```{r}
-relevantcols10 %>% 
-  select(hicid) %>% 
-  distinct(hicid)
-
-relevantcols12 %>% 
-  select(hicid) %>% 
-  distinct(hicid)
-
-relevantcols14 %>% 
-  select(hicid) %>% 
-  distinct(hicid)
-```
-
-``` {r}
+```{r include=FALSE}
 #Code from 19JULY2020
 #Calculate time spent in each behaviour for TUD10
 d10 <- relevantcols10 %>% 
@@ -58,6 +53,12 @@ d10 <- relevantcols10 %>%
   mutate(start_time_num = as.numeric(stime)) %>%
   mutate(sleep_time_num = as.numeric(sleep)) %>% 
   mutate(awake_time_num = as.numeric(awake))
+#Take care of alarm1 by deleting these participants; alarm1 refers to start times that were recorded incorrectly or out of order, this can potentially screw up the data and we do not want to make assumptions about the participants' activities, so we will not include them in our analysis 
+d10[d10$alarm1 == 1,]
+d10 <- d10[!(d10$alarm1==1),]
+#Take care of alarm2: this is when activities were recorded after bedtime, but before wake up time. We will delete these activities that occur after sleep time because their duration cannot be recorded. However, activities recorded after bedtime will remain because their duration can be calculated. 
+d10[d10$alarm2 == 1,]
+d10 <- d10[!((d10$alarm2 == 1) & (d10$stime >= d10$sleep)),]
 #Assign last activities of the day to be NA since they don't have a time to be subtracted from 
 before_sleep <- is.na(d10$end_time_num)
 #sleep_midnight <- (d$sleep_time_num == 0) + 86400 (This was an attempt to solve the problem at the end of this chunk. Some end_times were incorrect)
@@ -65,24 +66,22 @@ before_sleep <- is.na(d10$end_time_num)
 d10$end_time_num[before_sleep] <- (d10$sleep_time_num[before_sleep])
 #Add "1 day" to end times that occur after midnight 
 next_day_finish <- (d10$end_time_num < d10$start_time_num) & !is.na(d10$end_time_num)
-#table(next_day_finish)
+ #table(next_day_finish)
 d10$end_time_num[next_day_finish] <- (d10$end_time_num[next_day_finish] + 86400)
 #Subtract start time from end time to get the total time spent in each activity 
 d10$total_time_num <- d10$end_time_num - d10$start_time_num
 #hist(d$total_time_num)
-#Assign typos as "NA", these will not be used in analysis since we cannot calculate how much time was actually spent in this activity; determined by activities that were >12 hours in length; this takes care of alarm1 
-d10$total_time_num[d10$total_time_num > 43200] <- NA 
-#Assign alarm 2 rows as NA since these activities were performed after bed time, but before awake time - therefore time spent in this activity cannot be calculated
-d10$alarm2[d10$alarm2 == 1] <- NA
+
 #Convert total time from seconds to minutes 
 d10$total_minutes <- d10$total_time_num %/% 60
 #Get rid of NAs for sleep time because nighttime sleep cannot be calculated, since less than 5% (6/3460) participants have missing sleep data it is OK to delete them without biasing the results 
-d10[!is.na(d10$sleep_time_num),] -> d10_no_na
+d10[!is.na(d10$sleep_time_num),] -> d10_cleaned
+d10_cleaned
 
 ```
 
 
-``` {r}
+```{r include=FALSE}
 #Assign TUD activity codes to domain-specific variables for B-cohort at age 10
 unstr_lt_pa <- c(454, 463, 464, 465, 466, 491, 450, 451)
 wrk_hh_pa <- c(1,11,31,41,51, 61, 71, 82, 83, 84, 91, 201, 211, 221,231,301, 311, 321, 331, 341, 342, 344, 351, 361, 362, 363, 364, 365, 366, 367, 368, 371, 381)
@@ -100,7 +99,7 @@ uncodeable_activity <- c(971, 991, 998)
 no_secact <- -9
 
 #Add columns for domain-specific main and all secondary activities 
-d10_no_na %>% 
+d10_cleaned %>% 
   mutate(domain_main_activity = case_when(
     mainact %in% unstr_lt_pa ~ "Unstructured Leisure Time Light Physical Activity",
     mainact %in% wrk_hh_pa ~ "Work and Household Light Physical Activity",
@@ -443,11 +442,9 @@ d10_no_na %>%
 long_d10 %>% 
   dcast(hicid + awake_time_num + sleep_time_num ~ c(domain_specific_movement_behaviour), value.var="total_minutes", fun.aggregate = sum) -> wide_d10
 
-#s.na(long_d10$domain_specific_movement_behaviour)
 #apply(long_d10$, function(x) sum(is.na(x)))
 #Calculate Nighttime Sleep 
 #Make variable for subjects who went to sleep before midnight
-d10$sleep_time_num
 sleep_before_midnight <- !is.na(wide_d10$sleep_time_num) & (wide_d10$sleep_time_num > 43200)
 #Make variable for subjects who went to sleep after midnight 
 sleep_after_midnight <- !is.na(wide_d10$sleep_time_num) & (wide_d10$sleep_time_num <= 43200)
@@ -485,6 +482,10 @@ wide_d10$total_domain_specific_movement_behaviours <- wide_d10$`Active Transport
 
 #Check to see participants total minutes in a histogram
 hist(wide_d10$total_general_movement_behaviours)
+#Filter by participants who are over 1440 minutes to see what the issue is 
+wide_d10[wide_d10$total_general_movement_behaviours > 1440,]
+#These participants had typos in their diary, but weren't flagged in the original TUD. Delete these participants because they should have been flagged by alarm1. 
+wide_d10 <- wide_d10[!(wide_d10$total_general_movement_behaviours > 1440),]
 #Participants are either at or under 1440 minutes; filter the participants who have less than 1440 minutes to figure out why this is the case
 wide_d10[wide_d10$total_general_movement_behaviours < 1440,]
 #Participants who are under 1440 minutes have different "awake time" and "start time" for their first activity; the time between these activities matched the time these participants were under a total day 
@@ -495,82 +496,49 @@ wide_d10[is.na(wide_d10$hicid),]
 #Double-check unusually large sedentary behaviours
 wide_d10[wide_d10$`Sedentary Behaviour at 10` > 900,]
 #After cross checking behaviours, I found these particiants were primarily sedentary 
-```
-
-```{r}
-
-#install.packages("janitor")
-#Impute Missing Data with mice package, clean names to remove spaces, select "cart" method, remove ID, sleep time, and wake times as predictors
-ini <- mice(clean_names(wide_d10), maxit=0)
-pred <- ini$pred
-pred[, c("hicid", "awake_time_at_10", "sleep_time_at_10")] <- 0
-mice(clean_names(wide_d10), method = "cart", pred=pred) -> imputed_wide_d10
-#Check imputed data for a variable
-imputed_wide_d10$imp$passive_transportation_at_10
-#Save imputed dataset
-completed_wide_d10 <- complete(imputed_wide_d10, 1)
-#Check that imputed variables are plausible 
-stripplot(imputed_wide_d10, pch = 20, cex = 1.2)
-#Imputed values look reasonable! Woo hoooooo!!!!
-
-
-#summary(wide_d10)
-#?mice
-#str(wide_d10)
-
-#Check pattern of missing data 
-#md.pattern(wide_d10)
- 
-#install.packages("VIM")
-#library("VIM")
-#use plot to visualize missing data 
-#aggr_plot <- aggr(wide_d10, col=c('navyblue','red'), numbers=TRUE, sortVars=TRUE, labels=names(data), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
- 
-#Table of missing data 
-#sapply(wide_d10, function(x) sum(is.na(x)))
-
+wide_d10
 ```
 
 
-```{r}
+
+```{r eval=FALSE, include=FALSE}
 #Decide how many profiles should be used for latent profile analysis for general movement behaviours (This is just a test to make sure this works with the dataset; we'll do a multi trajectory analysis with the longitudinal data)
-completed_wide_d10 %>%
-  select(sedentary_behaviour_at_10, light_intensity_physical_activity_at_10, moderate_to_vigorous_intensity_physical_activity_at_10, sleep_at_10) %>% 
-  estimate_profiles(1:6,
-                    variances = c("equal", "varying", "varying", "equal"),
-                    covariances = c("zero", "varying", "zero", "equal"))%>% 
-  compare_solutions (statistics = c("AIC", "BIC"))
+ 
+#clean_names(wide_d10) %>%
+ #select(sedentary_behaviour_at_10, light_intensity_physical_activity_at_10, moderate_to_vigorous_intensity_physical_activity_at_10, sleep_at_10) %>% 
+ #estimate_profiles(1:6,
+             #      variances = c("equal", "varying", "varying", "equal"),
+             #      covariances = c("zero", "varying", "zero", "equal"))%>% 
+ # compare_solutions (statistics = c("AIC", "BIC"))
 
-#Results say Model 6 with 5 classes is the best fit solution. 
-completed_wide_d10 %>% 
-  select(sedentary_behaviour_at_10, light_intensity_physical_activity_at_10, moderate_to_vigorous_intensity_physical_activity_at_10, sleep_at_10) %>% 
-  estimate_profiles(5, 
-                    variances = "varying",
-                    covariances = "varying") %>% 
-  plot_profiles()
-#Next step would be to put this in table form so the data is easier to visualize
+#Results say Model 6 with 5 classes is the best fit solution
+#clean_names(wide_d10) %>% 
+ # select(sedentary_behaviour_at_10, light_intensity_physical_activity_at_10, moderate_to_vigorous_intensity_physical_activity_at_10, sleep_at_10) %>% 
+  #estimate_profiles(5, 
+              #      variances = "varying",
+                #    covariances = "varying") %>% 
+ # plot_profiles()
 
-#Decide how many profiles should be used for latent profile analysis for domain-specific movement behaviours 
-completed_wide_d10 %>%
-  select(unstructured_leisure_time_light_intensity_physical_activity_at_10, work_and_household_light_intensity_physical_activity_at_10, active_transportation_at_10, structured_leisure_time_moderate_to_vigorous_intensity_physical_activity_at_10, unstructured_leisure_time_moderate_to_vigorous_intensity_physical_activity_at_10, education_based_sedentary_behaviour_at_10, leisure_time_sedentary_behaviour_at_10, passive_transportation_at_10, recreational_screen_time_at_10, social_based_sedentary_behaviour_at_10, daytime_naps_at_10, nighttime_sleep_at_10) %>% 
-  estimate_profiles(1:6,
-                    variances = c("equal", "varying", "varying", "equal"),
-                    covariances = c("zero", "varying", "zero", "equal"))%>% 
-  compare_solutions (statistics = c("AIC", "BIC"))
+#Decide how many profiles should be used for latent profile analysis for domain-specific movement behaviours (This is just a test to make sure this works with the dataset; we'll do a multi trajectory analysis with the longitudinal data)
+ 
+#clean_names(wide_d10) %>%
+ # select(unstructured_leisure_time_light_intensity_physical_activity_at_10, work_and_household_light_intensity_physical_activity_at_10, active_transportation_at_10, structured_leisure_time_moderate_to_vigorous_intensity_physical_activity_at_10, unstructured_leisure_time_moderate_to_vigorous_intensity_physical_activity_at_10, education_based_sedentary_behaviour_at_10, leisure_time_sedentary_behaviour_at_10, passive_transportation_at_10, recreational_screen_time_at_10, social_based_sedentary_behaviour_at_10, daytime_naps_at_10, nighttime_sleep_at_10) %>% 
+  #estimate_profiles(1:6,
+                  #  variances = c("equal", "varying", "varying", "equal"),
+                  #  covariances = c("zero", "varying", "zero", "equal"))%>% 
+ # compare_solutions (statistics = c("AIC", "BIC"))
 
-#Results say Model 3 with 6 classes is the best fit solution. 
-completed_wide_d10 %>% 
-  select(unstructured_leisure_time_light_intensity_physical_activity_at_10, work_and_household_light_intensity_physical_activity_at_10, active_transportation_at_10, structured_leisure_time_moderate_to_vigorous_intensity_physical_activity_at_10, unstructured_leisure_time_moderate_to_vigorous_intensity_physical_activity_at_10, education_based_sedentary_behaviour_at_10, leisure_time_sedentary_behaviour_at_10, passive_transportation_at_10, recreational_screen_time_at_10, social_based_sedentary_behaviour_at_10, daytime_naps_at_10, nighttime_sleep_at_10) %>% 
-  estimate_profiles(6, 
-                    variances = "equal",
-                    covariances = "equal") %>% 
-  plot_profiles()
-#Next step would be to put this in table form so the data is easier to visualize
+#Results say Model 3 with 6 classes is the best fit solution
+#clean_names(wide_d10) %>%
+  #select(unstructured_leisure_time_light_intensity_physical_activity_at_10, work_and_household_light_intensity_physical_activity_at_10, active_transportation_at_10, structured_leisure_time_moderate_to_vigorous_intensity_physical_activity_at_10, unstructured_leisure_time_moderate_to_vigorous_intensity_physical_activity_at_10, education_based_sedentary_behaviour_at_10, leisure_time_sedentary_behaviour_at_10, passive_transportation_at_10, recreational_screen_time_at_10, social_based_sedentary_behaviour_at_10, daytime_naps_at_10, nighttime_sleep_at_10) %>% 
+ # estimate_profiles(6,
+               #     variances = c("equal"),
+                #    covariances = c("equal"))%>% 
+ # plot_profiles()
 
 ```
 
-
-``` {r} 
+```{r include=FALSE}
 #Code from 20JULY2020
 #Calculate time spent in each behaviour for TUd12
 d12 <- relevantcols12 %>% 
@@ -582,6 +550,12 @@ d12 <- relevantcols12 %>%
   mutate(start_time_num = as.numeric(stime)) %>%
   mutate(sleep_time_num = as.numeric(sleep)) %>% 
   mutate(awake_time_num = as.numeric(awake))
+#Take care of alarm1 by deleting these participants; alarm1 refers to start times that were recorded incorrectly or out of order, this can potentially screw up the data and we do not want to make assumptions about the participants'activities so we will not include them in our analysis 
+d12[d12$alarm1 == 1,]
+d12 <- d12[!(d12$alarm1==1),]
+#Take care of alarm2: this is when activities were recorded after bedtime, but before wake up time. We will delete these activities that occur after sleep time because their duration cannot be recorded. However, activities recorded after bedtime will remain because their duration can be calculated. 
+d12[d12$alarm2 == 1,]
+d12 <- d12[!((d12$alarm2 == 1) & (d12$stime >= d12$sleep)),]
 #Assign last activities of the day to be NA since they don't have a time to be subtracted from 
 before_sleep <- is.na(d12$end_time_num)
 #sleep_midnight <- (d$sleep_time_num == 0) + 86400 (This was an attempt to solve the problem at the end of this chunk. Some end_times were incorrect)
@@ -594,17 +568,15 @@ d12$end_time_num[next_day_finish] <- (d12$end_time_num[next_day_finish] + 86400)
 #Subtract start time from end time to get the total time spent in each activity 
 d12$total_time_num <- d12$end_time_num - d12$start_time_num
 #hist(d$total_time_num)
-#Assign typos as "NA", these will not be used in analysis since we cannot calculate how much time was actually spent in this activity; determined by activities that were >12 hours in length; this takes care of alarm1 
-d12$total_time_num[d12$total_time_num > 43200] <- NA 
-#Assign alarm 2 rows as NA since these activities were performed after bed time, but before awake time - therefore time spent in this activity cannot be calculated
-d12$alarm2[d12$alarm2 == 1] <- NA
+
 #Convert total time from seconds to minutes 
 d12$total_minutes <- d12$total_time_num %/% 60
 #Get rid of NAs for sleep time because nighttime sleep cannot be calculated, since less than 5% (6/3460) participants have missing sleep data it is OK to delete them without biasing the results 
-d12[!is.na(d12$sleep_time_num),] -> d12_no_na
+d12[!is.na(d12$sleep_time_num),] -> d12_cleaned
+d12_cleaned
 ```
 
-``` {r}
+```{r include=FALSE}
   
 #Assign TUD activity codes to domain-specific variables for B-cohort at age 12  
 
@@ -624,7 +596,7 @@ uncodeable_activity <- c(971, 991, 998)
 no_secact <- -9
 
 #Add columns for domain-specific main and all secondary activities 
-d12_no_na %>% 
+d12_cleaned %>% 
   mutate(domain_main_activity = case_when(
     mainact %in% unstr_lt_pa ~ "Unstructured Leisure Time Light Physical Activity",
     mainact %in% wrk_hh_pa ~ "Work and Household Light Physical Activity",
@@ -973,7 +945,6 @@ long_d12 %>%
 
 #Calculate Nighttime Sleep 
 #Make variable for subjects who went to sleep before midnight
-d12$sleep_time_num
 sleep_before_midnight <- !is.na(wide_d12$sleep_time_num) & (wide_d12$sleep_time_num > 43200)
 #Make variable for subjects who went to sleep after midnight 
 sleep_after_midnight <- !is.na(wide_d12$sleep_time_num) & (wide_d12$sleep_time_num <= 43200)
@@ -1013,50 +984,19 @@ wide_d12$total_domain_specific_movement_behaviours <- wide_d12$`Active Transport
 hist(wide_d12$total_general_movement_behaviours)
 #Participants are either at or under 1440 minutes; filter the participants who have less than 1440 minutes to figure out why this is the case
 wide_d12[wide_d12$total_general_movement_behaviours < 1440,]
+#Check why participants are over time
+wide_d12[wide_d12$total_general_movement_behaviours >1440,]
+#Delete participants who are typos that weren't flagged in teh original TuD
+wide_d12 <- wide_d12[!(wide_d12$total_general_movement_behaviours > 1440),]
 #Participants who are under 1440 minutes have different "awake time" and "start time" for their first activity; the time between these activities matched the time these participants were under a total day 
 #Check the extreme cases to see if this is still true
 wide_d12[wide_d12$total_general_movement_behaviours < 1400,]
 #Yep!
-
-```
-
-```{r}
-#install.packages("janitor")
-#Impute Missing Data with mice package, clean names to remove spaces, select "cart" method, remove ID, sleep time, and wake times as predictors
-ini <- mice(clean_names(wide_d12), maxit=0)
-pred <- ini$pred
-pred[, c("hicid", "awake_time_at_12", "sleep_time_at_12")] <- 0
-mice(clean_names(wide_d12), method = "cart", pred=pred) -> imputed_wide_d12
-#Check imputed data for a variable
-imputed_wide_d12$imp$passive_transportation_at_12
-#Save imputed dataset
-completed_wide_d12 <- complete(imputed_wide_d12, 1)
-#Check that imputed variables are plausible 
-stripplot(imputed_wide_d12, pch = 20, cex = 1.2)
-#Imputed values look reasonable! Woo hoooooo!!!!
-
-#summary(wide_d12)
-#When I run the basic formula it gives me this error message: "Error in str2lang(x) : <text>:1:17: unexpected symbol 1: hicid ~ 0+Awake Time ^". I clicked 'Show Traceback' and tried using the make.formula function, but that didn't help. 
-#?mice
-#str(wide_d12)
-
-#Check pattern of missing data 
-#md.pattern(wide_d12)
- 
-
-#install.packages("VIM")
-#library("VIM")
-#use plot to visualize missing data 
-#aggr_plot <- aggr(wide_d12, col=c('navyblue','red'), numbers=TRUE, sortVars=TRUE, labels=names(data), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
- 
-
-#Table of missing data 
-#sapply(wide_d12, function(x) sum(is.na(x)))
-
+wide_d12
 ```
 
 
-``` {r} 
+```{r include=FALSE}
 #Code from 20JULY2020
 #Calculate time spent in each behaviour for TUd14
 d14 <- relevantcols14 %>% 
@@ -1068,6 +1008,12 @@ d14 <- relevantcols14 %>%
   mutate(start_time_num = as.numeric(stime)) %>%
   mutate(sleep_time_num = as.numeric(sleep)) %>% 
   mutate(awake_time_num = as.numeric(awake))
+#Take care of alarm1 by deleting these participants; alarm1 refers to start times that were recorded incorrectly or out of order, this can potentially screw up the data and we do not want to make assumptions about the participants'activities so we will not include them in our analysis 
+d14[d14$alarm1 == 1,]
+d14 <- d14[!(d14$alarm1==1),]
+#Take care of alarm2: this is when activities were recorded after bedtime, but before wake up time. We will delete these activities that occur after sleep time because their duration cannot be recorded. However, activities recorded after bedtime will remain because their duration can be calculated. 
+d14[d14$alarm2 == 1,]
+d14 <- d14[!((d14$alarm2 == 1) & (d14$stime >= d14$sleep)),]
 #Assign last activities of the day to be NA since they don't have a time to be subtracted from 
 before_sleep <- is.na(d14$end_time_num)
 #sleep_midnight <- (d$sleep_time_num == 0) + 86400 (This was an attempt to solve the problem at the end of this chunk. Some end_times were incorrect)
@@ -1080,17 +1026,15 @@ d14$end_time_num[next_day_finish] <- (d14$end_time_num[next_day_finish] + 86400)
 #Subtract start time from end time to get the total time spent in each activity 
 d14$total_time_num <- d14$end_time_num - d14$start_time_num
 #hist(d$total_time_num)
-#Assign typos as "NA", these will not be used in analysis since we cannot calculate how much time was actually spent in this activity; determined by activities that were >12 hours in length; this takes care of alarm1 
-d14$total_time_num[d14$total_time_num > 43200] <- NA 
-#Assign alarm 2 rows as NA since these activities were performed after bed time, but before awake time - therefore time spent in this activity cannot be calculated
-d14$alarm2[d14$alarm2 == 1] <- NA
+
 #Convert total time from seconds to minutes 
 d14$total_minutes <- d14$total_time_num %/% 60
 #Get rid of NAs for sleep time because nighttime sleep cannot be calculated, since less than 5% (6/3460) participants have missing sleep data it is OK to delete them without biasing the results 
-d14[!is.na(d14$sleep_time_num),] -> d14_no_na
+d14[!is.na(d14$sleep_time_num),] -> d14_cleaned
+d14_cleaned
 ```
 
-``` {r}
+```{r include=FALSE}
   
 #Assign TUD activity codes to domain-specific variables for B-cohort at age 14
 unstr_lt_pa <- c(454, 463, 464, 465, 466, 491, 450, 451)
@@ -1109,7 +1053,7 @@ uncodeable_activity <- c(971, 991, 998)
 no_secact <- -9
 
 #Add columns for domain-specific main and all secondary activities 
-d14_no_na %>% 
+d14_cleaned %>% 
   mutate(domain_main_activity = case_when(
     mainact %in% unstr_lt_pa ~ "Unstructured Leisure Time Light Physical Activity",
     mainact %in% wrk_hh_pa ~ "Work and Household Light Physical Activity",
@@ -1457,7 +1401,6 @@ long_d14 %>%
 
 #Calculate Nighttime Sleep 
 #Make variable for subjects who went to sleep before midnight
-d14$sleep_time_num
 sleep_before_midnight <- !is.na(wide_d14$sleep_time_num) & (wide_d14$sleep_time_num > 43200)
 #Make variable for subjects who went to sleep after midnight 
 sleep_after_midnight <- !is.na(wide_d14$sleep_time_num) & (wide_d14$sleep_time_num <= 43200)
@@ -1495,322 +1438,206 @@ wide_d14$total_domain_specific_movement_behaviours <- wide_d14$`Active Transport
 
 #Check to see participants total minutes in a histogram
 hist(wide_d14$total_general_movement_behaviours)
+#Check why some participants are over 1440 minutes
+wide_d14[wide_d14$total_general_movement_behaviours > 1440, ]
+#Typos, delete participants
+wide_d14 <- wide_d14[!(wide_d14$total_general_movement_behaviours > 1440),]
 #Participants are either at or under 1440 minutes; filter the participants who have less than 1440 minutes to figure out why this is the case
 wide_d14[wide_d14$total_general_movement_behaviours < 1440,]
 #Participants who are under 1440 minutes have different "awake time" and "start time" for their first activity; the time between these activities matched the time these participants were under a total day 
 #Check the extreme cases to see if this is still true
 wide_d14[wide_d14$total_general_movement_behaviours < 1400,]
 #Yep!
-
+wide_d14
 ```
 
-```{r}
-#install.packages("janitor")
-#Impute Missing Data with mice package, clean names to remove spaces, select "cart" method, remove ID, sleep time, and wake times as predictors
-ini <- mice(clean_names(wide_d14), maxit=0)
-pred <- ini$pred
-pred[, c("hicid", "awake_time_at_14", "sleep_time_at_14")] <- 0
-mice(clean_names(wide_d14), method = "cart", pred=pred) -> imputed_wide_d14
-#Check imputed data for a variable
-imputed_wide_d14$imp$passive_transportation_at_14
-#Save imputed dataset
-completed_wide_d14 <- complete(imputed_wide_d14, 1)
-#Check that imputed variables are plausible 
-stripplot(imputed_wide_d14, pch = 20, cex = 1.2)
-#Imputed values look reasonable! Woo hoooooo!!!!
-
-#summary(wide_d14)
-#When I run the basic formula it gives me this error message: "Error in str2lang(x) : <text>:1:17: unexpected symbol 1: hicid ~ 0+Awake Time ^". I clicked 'Show Traceback' and tried using the make.formula function, but that didn't help. 
-#?mice
-#str(wide_d14)
-
-#Check pattern of missing data 
-#md.pattern(wide_d14)
- 
-
-#install.packages("VIM")
-#library("VIM")
-#use plot to visualize missing data 
-#aggr_plot <- aggr(wide_d14, col=c('navyblue','red'), numbers=TRUE, sortVars=TRUE, labels=names(data), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
- 
-
-#Table of missing data 
-#sapply(wide_d14, function(x) sum(is.na(x)))
-
-```
-
-```{r}
-#Impute missing longitudinal data 
+```{r include=FALSE}
+#Impute missing subject characteristics data 
+#Look for missing participant data for SEP
+relevant_lsacgrb10[is.na(relevant_lsacgrb10$SEP),]
+#Do not include these participants in analysis since we do not want to impute SEP since it is a key predictor of the research questions; additionally participants missing SEP data is < 5% (57/3,764)
+#To do this, first combine with TUD dataset
 #Combine the 3 time-use diaries 
-merge(completed_wide_d10, completed_wide_d12, by ="hicid", all = T) -> completed_wide_d10_d12_merge
-merged_TUD <- merge(completed_wide_d10_d12_merge, completed_wide_d14, by = "hicid", all =T)
+merge(clean_names(wide_d10), clean_names(wide_d12), by ="hicid", all = T) -> completed_wide_d10_d12_merge
+merged_TUD <- merge(completed_wide_d10_d12_merge, clean_names(wide_d14), by = "hicid", all =T)
+merged_TUD <- merge(merged_TUD, relevant_lsacgrb10, by = "hicid", all =T)
+merged_TUD[is.na(merged_TUD$SEP), ]
+
+
+#Some participants didn't have TUD data at Wave 6, since this is our baseline, they will not be included in the analysis 
+merged_TUD <- merged_TUD[!is.na(merged_TUD$SEP),]
+merged_TUD[is.na(merged_TUD$awake_time_at_10),]
+merged_TUD <- merged_TUD[!is.na(merged_TUD$awake_time_at_10),]
+merged_TUD <- merged_TUD[!is.na(merged_TUD$SEP),]
+#find out how many participants were missing TUD at Wave 7 and 8 
+merged_TUD[is.na(merged_TUD$awake_time_at_12), ]
+#632 participants missing Wave 7 TUD
+merged_TUD[is.na(merged_TUD$awake_time_at_14), ]
+#902 participants missing Wave 8 TUD
+#Now, see how many participants are missing both TUD
+merged_TUD[is.na(merged_TUD$awake_time_at_12) & is.na(merged_TUD$awake_time_at_14), ]
+#432 participants missing TUD at Wave 7 and 8 
+#Find the excluded participants 
+setdiff(relevant_lsacgrb10$hicid, merged_TUD$hicid) -> excludedlist
+relevant_lsacgrb10$excluded <- relevant_lsacgrb10$hicid %in% excludedlist
+mean(relevant_lsacgrb10$Remoteness[relevant_lsacgrb10$excluded == TRUE]) -> mean_excluded_remoteness
+sd(relevant_lsacgrb10$Remoteness[relevant_lsacgrb10$excluded == TRUE]) -> sd_excluded_remoteness   
+mean(relevant_lsacgrb10$Age[relevant_lsacgrb10$excluded == TRUE]) -> mean_excluded_age
+sd(relevant_lsacgrb10$Age[relevant_lsacgrb10$excluded == TRUE]) -> sd_excluded_age
+mean(relevant_lsacgrb10$SEP[relevant_lsacgrb10$excluded == TRUE]) -> mean_excluded_SEP
+sd(relevant_lsacgrb10$SEP[relevant_lsacgrb10$excluded == TRUE]) -> sd_excluded_SEP
+relevant_lsacgrb10 %>% 
+  filter(excluded == TRUE) %>% 
+    group_by(Sex) %>% 
+    summarise(percent = 100 * n() / length(excludedlist)) 
+
+relevant_lsacgrb10 %>% 
+   filter(excluded == TRUE) %>% 
+    group_by(Indigenous) %>% 
+    summarise(percent = 100 * n() / length(excludedlist))
+
+
 #Impute missing data using mice 
 ini <- mice(merged_TUD, maxit=0)
 pred <- ini$pred
 pred[, c("hicid", "awake_time_at_10", "sleep_time_at_10")] <- 0
+meth <- ini$meth
+meth["sex"] <- "logreg"
+meth["indigenous"] <- "logreg"
+meth["remoteness"] <- "polr"
+meth
 mice(merged_TUD, method = "cart", pred=pred) -> imputed_merged_TUD
 #Save imputed dataset
 completed_merged_TUD <- complete(imputed_merged_TUD, 1)
-#Check that imputed variables are plausible 
+```
+
+```{r echo=TRUE}
+#The code is not shown for the following steps: 
+##Calculated time spent in each behaviour per participant
+##Deleted participants that didn't have sleep data, SEP reported at baseline, or they had invalid time-use diaries due to typos 
+##Made decision rules to assign all activities to their appropriate domain-specific and general movement behaviour 
+##Merged time-use diaires together from all data points 
+##Imputed missing data
+#Here: Checked that imputed variables are plausible 
 densityplot(imputed_merged_TUD)
 #Imputed values look reasonable! Woo hoooooo!!!!
 ```
 
-```{r}
-#Import Borja's data
-example_multitrajectory_code_data <- read_sav("C:/Users/katri/Documents/ACU/Study_2/Multiple Traj Data_health_outcomes_wide.sav")
+```{r echo=FALSE}
+#Calculate means and SD for MB at all timepoints and subject details 
+#Turn off scientific notation 
+options(scipen = 999)
+#Create new dataframe with mean and SD calculations of MB
+completed_merged_TUD %>% 
+  select()
+first_column <- c(colMeans(completed_merged_TUD[, c(4:65)]) %>% 
+  round(digits = 0))
+second_column <- c(sapply(completed_merged_TUD[,c(4:65)], sd) %>% 
+  round(digits=0))
+MB_stats <- data.frame(first_column, second_column)
+#Add parentheses to SD
+MB_stats$second_column <- paste0("(", MB_stats$second_column, ")")
+#Combine means and SD in the same column
+MB_stats$"Mean (SD) or %" <- paste(MB_stats$first_column, MB_stats$second_column, sep = " ")
+#Remove columns with just the mean or SD
+MB_stats %>% select(-(first_column:second_column)) -> MB_stats
+#Make the label column an actual column
+MB_stats$Characteristics <- rownames(MB_stats)
+#Get rid of the label column
+rownames(MB_stats) <- c()
+#Swap the column positions
+MB_stats <- MB_stats %>% 
+  relocate(Characteristics, .before = `Mean (SD) or %`)
+#Delete the unnecessary rows that I accidentally included
+MB_stats[-c(10, 19, 20, 21, 22, 32, 41, 42, 43, 44, 54),] -> MB_stats
+
+#First, calculate percentage of males vs. females, Indigenous, and mean/SD for age, remotness, and SEP
+completed_merged_TUD %>% 
+    group_by(Sex) %>% 
+    summarise(percent = 100 * n() /nrow(completed_merged_TUD)) 
+
+completed_merged_TUD %>% 
+    group_by(Indigenous) %>% 
+    summarise(percent = 100 * n() /nrow(completed_merged_TUD))
+
+mean(completed_merged_TUD$Age)
+sd(completed_merged_TUD$Age)
+mean(completed_merged_TUD$Remoteness)
+sd(completed_merged_TUD$Remoteness)
+mean(completed_merged_TUD$SEP)
+sd(completed_merged_TUD$SEP)
+#Create dataframe containing subject stats
+subject_stats <- data.frame(x = c('Age (Years)', 'Female (% yes)', 'Indigenous (% yes)', 'Remoteness', 'Socioeconomic Position'),
+                            y = c('10.4 (.49)', 49.1, 2.6, '.77 (1.25)', '.02 (1.00)'))
+#Rename columns
+setNames(subject_stats, c("Characteristics", "Mean (SD) or %")) -> subject_stats
+
+#Combine datasets
+descriptive_stats <- rbind(subject_stats, MB_stats)
+#Assign "categories' for subject details, domain-specific movement behaviours, and general movement behaviours
+descriptive_stats$category <- c(1,1,1,1,1,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2)
+arrange(descriptive_stats, category, Characteristics) -> descriptive_stats
+descriptive_stats %>% select(-category) -> descriptive_stats 
+rownames(descriptive_stats) <- c() 
+descriptive_stats$Characteristics <- str_replace_all(descriptive_stats$Characteristics, "_", " ")
+descriptive_stats$Characteristics <- str_to_title(descriptive_stats$Characteristics)
+
+kbl(descriptive_stats, caption = "Table 1. Descriptive Statistics.") %>% 
+  kable_paper(full_width = F) %>% 
+  pack_rows("Subject Details", 1, 5) %>% 
+  pack_rows("General Movement Behaviours", 6, 17) %>% 
+  pack_rows("Domain-Specific Movement Behaviours", 18, 56) %>% 
+  footnote(general = "Remoteness: based on neighbourhood status remoteness area classification, 0 Highly accessible, 1 Accessible, 2 Moderately Accessible, 3 Remote, 4 Very remote; Socioeconomic Position: a compositive score consisiting of parents' income, education, and occupational status; all movement behaviour means and standard deviations are measured in minutes; 10, 12, and 14 refer to the participants' age at the time of data collection")                                 
+                                  
 
 
 ```
 
-```{r}
-#Copy Borja's code; run it step by step to see what I can understand
+```{r echo=TRUE}
+#Test to see if there are differences between the included and excluded participants' sex, Indigenous status, and remoteness 
+#install.packages("rstatix")
+library("rstatix")
+relevant_lsacgrb10 %>% 
+  t_test(Remoteness ~ excluded, detailed = TRUE) %>% 
+  add_significance()
+#Find difference between proportions of girls and boys in included and excluded group; 1= male, TRUE = excluded
+table(relevant_lsacgrb10$Sex, relevant_lsacgrb10$excluded)
+mcnemar.test(table(relevant_lsacgrb10$Sex, relevant_lsacgrb10$excluded))
+#Make column saying if Indigenous or not; TRUE = not indigenous
+relevant_lsacgrb10$Yes_No_Indigenous <-relevant_lsacgrb10$Indigenous == 1 
+#Find difference between proportions of Indigenous participants included in the analysis; FALSE = Indigenous (y), TRUE = excluded (x)
+table(relevant_lsacgrb10$Yes_No_Indigenous, relevant_lsacgrb10$excluded)
+mcnemar.test(table(relevant_lsacgrb10$Yes_No_Indigenous, relevant_lsacgrb10$excluded))
+```
+
+```{r echo=FALSE}
+#Test correlations between movement behaviours
+#install.packages("corrr")
+library("corrr")
+completed_merged_TUD %>% 
+  select(active_transportation_at_10:structured_leisure_time_moderate_to_vigorous_intensity_physical_activity_at_10, unstructured_leisure_time_light_intensity_physical_activity_at_10:sleep_at_10, active_transportation_at_12:structured_leisure_time_moderate_to_vigorous_intensity_physical_activity_at_12, unstructured_leisure_time_light_intensity_physical_activity_at_12:sleep_at_12, active_transportation_at_14:structured_leisure_time_moderate_to_vigorous_intensity_physical_activity_at_14, unstructured_leisure_time_light_intensity_physical_activity_at_14:sleep_at_14, SEP) -> correlation_variables
+
+#Rename variables so the chart is readable
+rename_with(correlation_variables, ~1:52) -> renamed_correlation_variables
+#Naturally, overall sleep and nighttime sleep are high correlated! I forgot to split up the general and domaini-specific movement behaviours. Whoops! 
+correlation_variables %>% 
+  select(light_intensity_physical_activity_at_10:sleep_at_10, light_intensity_physical_activity_at_12:sleep_at_12, light_intensity_physical_activity_at_14:sleep_at_14) -> general_MB_correlation_variables
+#Rename general movement behaviours so the chart is readable
+rename_with(general_MB_correlation_variables, ~1:12) -> renamed_general_MB_correlation_variables
+#Plot correlations
+corrplot::corrplot(cor(renamed_general_MB_correlation_variables))
+#All good here, now do the same thing with domain-specific movement behaviours
+correlation_variables %>% 
+  select(active_transportation_at_10:nighttime_sleep_at_10, active_transportation_at_12:nighttime_sleep_at_12, active_transportation_at_14:nighttime_sleep_at_14) -> domain_specific_MB_correlation_variables
+
+rename_with(domain_specific_MB_correlation_variables, ~1:39) -> renamed_domain_specific_MB_correlation_variables
+
+corrplot::corrplot(cor(renamed_domain_specific_MB_correlation_variables))
+#Happy correlations, all good! 
+#install.packages("corrplot")
 
 
-#/* REFERENCE MATERIAL
-#	Multi-trajectories paper: https://www.andrew.cmu.edu/user/bjones/pdf/multtraj.pdf
-#	Example code: https://andrewpwheeler.wordpress.com/2016/10/06/group-based-trajectory-models-in-stata-some-graphs-and-fit-statistics/
-#*/
-
-// Import Data - we converted from SPSS in R
-	use "~/Downloads/Multiple Traj Data_health_outcomes_wide.sav.dta"
-
-// We don't use these, but i've left these in just in case
-	*Need to generate a set of time variables to pass to traj, just label 1 to 10
-	forval i = 1/10 { 
-	  generate t_`i' = `i'
-	}
-
-// Generate timepoint variables
-	gen t0 = 5
-	gen t1 = 8
-	gen t2 = 10
-	gen t3 = 14
-	gen t4 = 16
-	gen t5 = 20
-
-// Copied from Jo's code
-***I used code from Andrew wheeler website - code to obtain other fit statistics for deciding best model to use - ***
-	program summary_table_procTraj
-		preserve
-		*now lets look at the average posterior probability
-		gen Mp = 0
-		foreach i of varlist _traj_ProbG* {
-			replace Mp = `i' if `i' > Mp 
-		}
-		sort _traj_Group
-		*and the odds of correct classification
-		by _traj_Group: gen countG = _N
-		by _traj_Group: egen groupAPP = mean(Mp)
-		by _traj_Group: gen counter = _n
-		gen n = groupAPP/(1 - groupAPP)
-		gen p = countG/ _N
-		gen d = p/(1-p)
-		gen occ = n/d
-		*Estimated proportion for each group
-		scalar c = 0
-		gen TotProb = 0
-		foreach i of varlist _traj_ProbG* {
-		   scalar c = c + 1
-		   quietly summarize `i'
-		   replace TotProb = r(sum)/ _N if _traj_Group == c 
-		}
-		gen d_pp = TotProb/(1 - TotProb)
-		gen occ_pp = n/d_pp
-		*This displays the group number [_traj_~p], 
-		*the count per group (based on the max post prob), [countG]
-		*the average posterior probability for each group, [groupAPP]
-		*the odds of correct classification (based on the max post prob group assignment), [occ] 
-		*the odds of correct classification (based on the weighted post. prob), [occ_pp]
-		*and the observed probability of groups versus the probability [p]
-		*based on the posterior probabilities [TotProb]
-		list _traj_Group countG groupAPP occ occ_pp p TotProb if counter == 1
-		restore
-	end
-
-// Rename the orgsport variable to match format for the others	
-	rename y5_orgsport orgsport_y5
-	rename y8_orgsport orgsport_y8
-	rename y10_orgsport orgsport_y10
-	rename y13_orgsport orgsport_y13
-	rename y16_orgsport orgsport_y16
-	
-// Create a set of variables for number of observations in each row
-	egen num_sport = rownonmiss(y5_orgsport y8_orgsport y10_orgsport y13_orgsport y16_orgsport)
-	egen num_sleep = rownonmiss(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16)
-	egen num_tv = rownonmiss(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16)
-
-
-	
-// BELOW WE TESTED DIFFERENT NUMBERS OF GROUPS, BY SEX, TO SEE WHICH FIT BEST
-
-	log using "~/Downloads/Traj/log", text
-	// BOYS
-	// TWO GROUPS
-		//MODEL
-		traj if SEX==0, multgroups(2) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2) model3(logit)
-		//PLOT
-		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		graph save Graph "~/Downloads/Traj/Boys_TWOGROUPS.gph"
-		//SUMMARY
-		summary_table_procTraj
-		
-	// THREE GROUPS
-		traj if SEX==0, multgroups(3) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2) model3(logit)
-
-		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		graph save Graph "~/Downloads/Traj/Boys_THREGROUPS.gph"
-		summary_table_procTraj
-		
-	// FOUR GROUPS
-		traj if SEX==0, multgroups(4) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2) model3(logit)
-
-		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		graph save Graph "~/Downloads/Traj/Boys_FOURGROUPS.gph"
-		summary_table_procTraj
-		
-	// FIVE GROUPS
-		traj if SEX==0, multgroups(5) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2 2) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2 2) model3(logit)
-
-		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		graph save Graph "~/Downloads/Traj/Boys_FIVEGROUPS.gph"
-		summary_table_procTraj
-		
-	// SIX GROUPS
-		traj if SEX==0, multgroups(6) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2 2 2) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2 2 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2 2 2) model3(logit)
-
-		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		graph save Graph "~/Downloads/Traj/Boys_SIXGROUPS.gph"
-		summary_table_procTraj
-
-	// GIRLS
-	// TWO GROUPS
-		traj if SEX==1, multgroups(2) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2) model3(logit)
-
-		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		graph save Graph "~/Downloads/Traj/GIRLS_TWOGROUPS.gph"
-		summary_table_procTraj
-		
-	// THREE GROUPS
-		traj if SEX==1, multgroups(3) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2) model3(logit)
-
-		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		graph save Graph "~/Downloads/Traj/GIRLS_THREGROUPS.gph"
-		summary_table_procTraj
-		
-	// FOUR GROUPS
-		traj if SEX==1, multgroups(4) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2) model3(logit)
-
-		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		graph save Graph "~/Downloads/Traj/GIRLS_FOURGROUPS.gph"
-		summary_table_procTraj
-		
-	// FIVE GROUPS
-		traj if SEX==1, multgroups(5) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2 2) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2 2) model3(logit)
-
-		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		graph save Graph "~/Downloads/Traj/GIRLS_FIVEGROUPS.gph"
-		summary_table_procTraj
-		
-	// SIX GROUPS
-		traj if SEX==1, multgroups(6) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2 2 2) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2 2 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2 2 2) model3(logit)
-
-		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		graph save Graph "~/Downloads/Traj/GIRLS_SIXGROUPS.gph"
-		summary_table_procTraj
-			
-	// ALL
-	// TWO GROUPS
-		traj , multgroups(2) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2) model3(logit)
-
-		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		graph save Graph "~/Downloads/Traj/ALL_TWOGROUPS.gph"
-		summary_table_procTraj
-		
-	// THREE GROUPS
-		traj , multgroups(3) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2) model3(logit)
-
-		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		graph save Graph "~/Downloads/Traj/ALL_THREGROUPS.gph"
-		summary_table_procTraj
-		
-	// FOUR GROUPS
-		traj , multgroups(4) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2) model3(logit)
-
-		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		graph save Graph "~/Downloads/Traj/ALL_FOURGROUPS.gph"
-		summary_table_procTraj
-		
-	// FIVE GROUPS
-		traj , multgroups(5) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2 2) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2 2) model3(logit)
-
-		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		graph save Graph "~/Downloads/Traj/ALL_FIVEGROUPS.gph"
-		summary_table_procTraj
-		
-	// SIX GROUPS
-		traj , multgroups(6) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(2 2 2 2 2 2) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 2 2 2 2 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 2 2 2 2 2) model3(logit)
-
-		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		graph save Graph "~/Downloads/Traj/ALL_SIXGROUPS.gph"
-		summary_table_procTraj
-	log close
-
-// THESE SEEMED TO BE THE BEST MODELS FOR EACH SEX. WE TESTED DIFFERENT POLYNOMIALS AND ARRVIED AT THE BELOW.
-	// BOYS THREE LEVEL - VARYING
-		traj if SEX==0, multgroups(3) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(1 1 1) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 3 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 3 3) model3(logit)
-		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-
-
-	//GIRLS THREE LEVEL - VARYING
-		traj if SEX==1, multgroups(3) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(1 2 1) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 3 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 3 3) model3(logit)
-		multtrajplot, xtitle(Age) ytitle1(Sleep) ytitle2(TV) ytitle3(Sports) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		
-// TO TEST FOR EFFECT ON AN OUTCOME, ADD TO MODEL WITH outcome(**VARIABLE**) omodel(**DISTRIBUTION**)
-	//EXAMPLES
-	// BOYS - BODY FAT
-		traj if SEX==0, multgroups(3) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(1 1 1) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 3 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 3 3) model3(logit) outcome(A20DX_TFAT) omodel(normal)
-		
-	// GIRLS - MENTAL HEALTH	
-		traj if SEX==1, multgroups(3) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(1 2 1) model1(cnorm) min1(0) max1(12) ///
-		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 3 2) model2(cnorm) min2(0) max2(5) ///
-		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 3 3) model3(logit) outcome(A20_MCS) omodel(normal)
-
+#apply(correlation_variables,2,function(col)cor.test(col, correlation_variables$SEP)) -> SEP_correlation_tests
 
 ```
+

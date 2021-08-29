@@ -79,7 +79,6 @@ d10_cleaned
 
 ```
 
-
 ```{r include=FALSE}
 #Assign TUD activity codes to domain-specific variables for B-cohort at age 10
 unstr_lt_pa <- c(427, 428, 430, 454, 463, 464, 465, 466, 491, 450, 451)

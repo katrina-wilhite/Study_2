@@ -1,3 +1,8 @@
+---
+output:
+  html_document: default
+  word_document: default
+---
 ```{r include=FALSE}
 #Open necessary packages 
 library("haven")
@@ -189,7 +194,7 @@ d10_cleaned %>%
     (mainact %in% daytime_naps & secact1 %in% daytime_naps & secact2 %in% no_secact) ~ "Daytime Naps",
     (mainact %in% uncodeable_activity & secact1 %in% uncodeable_activity & secact2 %in% no_secact) ~ "Uncodeable Activity",
     (mainact %in% unstr_lt_pa & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
-    (mainact %in% unstr_lt_pa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Unstructured Leisure Time Sedentary Behaviour",
+    (mainact %in% unstr_lt_pa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
     (mainact %in% lt_sb & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
     (mainact %in% wrk_hh_pa & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
     (mainact %in% wrk_hh_pa & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Work and Household Light-Intensity Physical Activity",
@@ -423,7 +428,7 @@ d10_cleaned %>%
    (mainact %in% recreational_screentime & (secact1 %in% unstr_lt_mvpa) & total_minutes > 60) ~ "Recreational Screen Time",
    (mainact %in% wrk_hh_pa & (secact1 %in% str_lt_mvpa | secact1 %in% unstr_lt_mvpa) & (secact2 %in% education_sb | secact3 %in% education_sb | secact1 %in% selfcare_sb | secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact1 %in% lt_sb | secact2 %in% lt_sb | secact3 %in% lt_sb)) ~ "Work and Household Light-Intensity Physical Activity",
    (mainact %in% unstr_lt_pa & (secact1 %in% recreational_screentime | secact2 %in% recreational_screentime | secact3 %in% recreational_screentime | secact1 %in% str_lt_mvpa | secact2 %in% str_lt_mvpa | secact3 %in% str_lt_mvpa | secact1 %in% unstr_lt_mvpa | secact2 %in% unstr_lt_mvpa | secact3 %in% unstr_lt_mvpa) & !(secact1 %in% education_sb | secact2 %in% education_sb | secact3 %in% education_sb | secact1 %in% selfcare_sb | secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact1 %in% lt_sb | secact2 %in% lt_sb | secact3 %in% lt_sb)) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
-   (mainact %in% unstr_lt_pa & (secact1 %in% str_lt_mvpa | secact1 %in% unstr_lt_mvpa) & (secact2 %in% education_sb | secact3 %in% education_sb | secact1 %in% selfcare_sb | secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact1 %in% lt_sb | secact2 %in% lt_sb | secact3 %in% lt_sb)) ~ "Unstructured Lesiure Time Light-Intensity Physical Activity",
+   (mainact %in% unstr_lt_pa & (secact1 %in% str_lt_mvpa | secact1 %in% unstr_lt_mvpa) & (secact2 %in% education_sb | secact3 %in% education_sb | secact1 %in% selfcare_sb | secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact1 %in% lt_sb | secact2 %in% lt_sb | secact3 %in% lt_sb)) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
    (mainact %in% uncodeable_activity & secact1 %in% unstr_lt_pa & !(secact1 %in% recreational_screentime | secact2 %in% recreational_screentime | secact3 %in% recreational_screentime | secact1 %in% education_sb | secact2 %in% education_sb | secact3 %in% education_sb | secact1 %in% selfcare_sb | secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact1 %in% lt_sb | secact2 %in% lt_sb | secact3 %in% lt_sb) & !(secact1 %in% str_lt_mvpa | secact2 %in% str_lt_mvpa | secact3 %in% str_lt_mvpa) & !(secact1 %in% unstr_lt_mvpa | secact2 %in% unstr_lt_mvpa | secact3 %in% unstr_lt_mvpa) & !(secact1 %in% passive_trans | secact2 %in% passive_trans | secact3 %in% passive_trans) & !(secact1 %in% active_trans | secact2 %in% active_trans | secact3 %in% active_trans)) ~ "Unstructured Leisure Time Light-Intensity Physical Activity"
     
   )) -> long_d10
@@ -487,7 +492,7 @@ wide_d10$school[wide_d10$school == -9] <- 2
 wide_d10
 ```
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 library(ggplot2)
 library(tidyr)
 ggplot(gather(wide_d10, cols, value), aes(x = value)) + 
@@ -498,8 +503,10 @@ hist.data.frame(wide_d10)
 hist(wide_d10$`Moderate- to Vigorous- Intensity Physical Activity at 10`)
 wide_d10[wide_d10$`Moderate- to Vigorous- Intensity Physical Activity at 10` > 120,]
 wide_d10[wide_d10$`Moderate- to Vigorous- Intensity Physical Activity at 10` > 350,]
+hist(wide_d10$`Recreational Screen Time at 10`)
 hist(wide_d10$`Sedentary Behaviour at 10`)
 wide_d10[wide_d10$`Sedentary Behaviour at 10` > 800,]
+wide_d10[wide_d10$`Recreational Screen Time at 10` > 400,]
 hist(wide_d10$`Sleep at 10`)
 hist(wide_d10$`Active Transportation at 10`)
 hist(wide_d10$`Daytime Naps at 10`)
@@ -512,7 +519,7 @@ for(i in 1:ncol(wide_d10)){
 
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 #Not shown: I uploaded time-use diaries for the B-cohort from the LSAC dataset at Waves 6-8 (the participants were aged 10-14), I calculated sleep time for each participant, how much time they spent in each participant, got rid of participants who didn't report sleep time or had typos in their time-use diary, assigned each activity to specific general and domain-specific movement behaviours based on decision rules, and converted the data to wide format
 #Check to see participants total minutes in a histogram
 hist(wide_d10$total_general_movement_behaviours)
@@ -721,7 +728,7 @@ d12_cleaned %>%
     (mainact %in% daytime_naps & secact1 %in% daytime_naps & secact2 %in% no_secact) ~ "Daytime Naps",
     (mainact %in% uncodeable_activity & secact1 %in% uncodeable_activity & secact2 %in% no_secact) ~ "Uncodeable Activity",
     (mainact %in% unstr_lt_pa & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
-    (mainact %in% unstr_lt_pa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Unstructured Leisure Time Sedentary Behaviour",
+    (mainact %in% unstr_lt_pa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
     (mainact %in% lt_sb & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
     (mainact %in% wrk_hh_pa & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
     (mainact %in% wrk_hh_pa & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Work and Household Light-Intensity Physical Activity",
@@ -956,7 +963,7 @@ d12_cleaned %>%
    (mainact %in% recreational_screentime & (secact1 %in% unstr_lt_mvpa) & total_minutes > 60) ~ "Recreational Screen Time",
    (mainact %in% wrk_hh_pa & (secact1 %in% str_lt_mvpa | secact1 %in% unstr_lt_mvpa) & (secact2 %in% education_sb | secact3 %in% education_sb | secact1 %in% selfcare_sb | secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact1 %in% lt_sb | secact2 %in% lt_sb | secact3 %in% lt_sb)) ~ "Work and Household Light-Intensity Physical Activity",
    (mainact %in% unstr_lt_pa & (secact1 %in% recreational_screentime | secact2 %in% recreational_screentime | secact3 %in% recreational_screentime | secact1 %in% str_lt_mvpa | secact2 %in% str_lt_mvpa | secact3 %in% str_lt_mvpa | secact1 %in% unstr_lt_mvpa | secact2 %in% unstr_lt_mvpa | secact3 %in% unstr_lt_mvpa) & !(secact1 %in% education_sb | secact2 %in% education_sb | secact3 %in% education_sb | secact1 %in% selfcare_sb | secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact1 %in% lt_sb | secact2 %in% lt_sb | secact3 %in% lt_sb)) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
-   (mainact %in% unstr_lt_pa & (secact1 %in% str_lt_mvpa | secact1 %in% unstr_lt_mvpa | secact1 %in% social_sb) & (secact2 %in% education_sb | secact3 %in% education_sb |  secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact2 %in% lt_sb | secact3 %in% lt_sb | secact2 %in% social_sb | secact3 %in% social_sb)) ~ "Unstructured Lesiure Time Light-Intensity Physical Activity",
+   (mainact %in% unstr_lt_pa & (secact1 %in% str_lt_mvpa | secact1 %in% unstr_lt_mvpa | secact1 %in% social_sb) & (secact2 %in% education_sb | secact3 %in% education_sb |  secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact2 %in% lt_sb | secact3 %in% lt_sb | secact2 %in% social_sb | secact3 %in% social_sb)) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
    (mainact %in% uncodeable_activity & secact1 %in% unstr_lt_pa & !(secact1 %in% recreational_screentime | secact2 %in% recreational_screentime | secact3 %in% recreational_screentime | secact1 %in% education_sb | secact2 %in% education_sb | secact3 %in% education_sb | secact1 %in% selfcare_sb | secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact1 %in% lt_sb | secact2 %in% lt_sb | secact3 %in% lt_sb) & !(secact1 %in% str_lt_mvpa | secact2 %in% str_lt_mvpa | secact3 %in% str_lt_mvpa) & !(secact1 %in% unstr_lt_mvpa | secact2 %in% unstr_lt_mvpa | secact3 %in% unstr_lt_mvpa) & !(secact1 %in% passive_trans | secact2 %in% passive_trans | secact3 %in% passive_trans) & !(secact1 %in% active_trans | secact2 %in% active_trans | secact3 %in% active_trans)) ~ "Unstructured Leisure Time Light-Intensity Physical Activity"
     
   )) -> long_d12
@@ -1173,7 +1180,7 @@ d14_cleaned %>%
     (mainact %in% daytime_naps & secact1 %in% daytime_naps & secact2 %in% no_secact) ~ "Daytime Naps",
     (mainact %in% uncodeable_activity & secact1 %in% uncodeable_activity & secact2 %in% no_secact) ~ "Uncodeable Activity",
     (mainact %in% unstr_lt_pa & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
-    (mainact %in% unstr_lt_pa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Unstructured Leisure Time Sedentary Behaviour",
+    (mainact %in% unstr_lt_pa & secact1 %in% social_sb & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
     (mainact %in% lt_sb & secact1 %in% unstr_lt_mvpa & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
     (mainact %in% wrk_hh_pa & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
     (mainact %in% wrk_hh_pa & secact1 %in% recreational_screentime & secact2 %in% no_secact) ~ "Work and Household Light-Intensity Physical Activity",
@@ -1408,7 +1415,7 @@ d14_cleaned %>%
    (mainact %in% recreational_screentime & (secact1 %in% unstr_lt_mvpa) & total_minutes > 60) ~ "Recreational Screen Time",
    (mainact %in% wrk_hh_pa & (secact1 %in% str_lt_mvpa | secact1 %in% unstr_lt_mvpa) & (secact2 %in% education_sb | secact3 %in% education_sb | secact1 %in% selfcare_sb | secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact1 %in% lt_sb | secact2 %in% lt_sb | secact3 %in% lt_sb)) ~ "Work and Household Light-Intensity Physical Activity",
    (mainact %in% unstr_lt_pa & (secact1 %in% recreational_screentime | secact2 %in% recreational_screentime | secact3 %in% recreational_screentime | secact1 %in% str_lt_mvpa | secact2 %in% str_lt_mvpa | secact3 %in% str_lt_mvpa | secact1 %in% unstr_lt_mvpa | secact2 %in% unstr_lt_mvpa | secact3 %in% unstr_lt_mvpa) & !(secact1 %in% education_sb | secact2 %in% education_sb | secact3 %in% education_sb | secact1 %in% selfcare_sb | secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact1 %in% lt_sb | secact2 %in% lt_sb | secact3 %in% lt_sb)) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
-   (mainact %in% unstr_lt_pa & (secact1 %in% str_lt_mvpa | secact1 %in% unstr_lt_mvpa | secact1 %in% social_sb) & (secact2 %in% education_sb | secact3 %in% education_sb |  secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact2 %in% lt_sb | secact3 %in% lt_sb | secact2 %in% social_sb | secact3 %in% social_sb)) ~ "Unstructured Lesiure Time Light-Intensity Physical Activity",
+   (mainact %in% unstr_lt_pa & (secact1 %in% str_lt_mvpa | secact1 %in% unstr_lt_mvpa | secact1 %in% social_sb) & (secact2 %in% education_sb | secact3 %in% education_sb |  secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact2 %in% lt_sb | secact3 %in% lt_sb | secact2 %in% social_sb | secact3 %in% social_sb)) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
    (mainact %in% uncodeable_activity & secact1 %in% unstr_lt_pa & !(secact1 %in% recreational_screentime | secact2 %in% recreational_screentime | secact3 %in% recreational_screentime | secact1 %in% education_sb | secact2 %in% education_sb | secact3 %in% education_sb | secact1 %in% selfcare_sb | secact2 %in% selfcare_sb | secact3 %in% selfcare_sb | secact1 %in% lt_sb | secact2 %in% lt_sb | secact3 %in% lt_sb) & !(secact1 %in% str_lt_mvpa | secact2 %in% str_lt_mvpa | secact3 %in% str_lt_mvpa) & !(secact1 %in% unstr_lt_mvpa | secact2 %in% unstr_lt_mvpa | secact3 %in% unstr_lt_mvpa) & !(secact1 %in% passive_trans | secact2 %in% passive_trans | secact3 %in% passive_trans) & !(secact1 %in% active_trans | secact2 %in% active_trans | secact3 %in% active_trans)) ~ "Unstructured Leisure Time Light-Intensity Physical Activity"
     
   )) -> long_d14
@@ -1488,8 +1495,8 @@ merged_TUD[is.na(merged_TUD$SEP), ]
 
 
 #Some participants didn't have TUD data at Wave 6, since this is our baseline, they will not be included in the analysis 
-merged_TUD <- merged_TUD[!is.na(merged_TUD$SEP),]
-merged_TUD[is.na(merged_TUD$awake_time_at_10),]
+merged_TUD[is.na(merged_TUD$awake_time_at_10), ]
+
 merged_TUD <- merged_TUD[!is.na(merged_TUD$awake_time_at_10),]
 merged_TUD <- merged_TUD[!is.na(merged_TUD$SEP),]
 #find out how many participants were missing TUD at Wave 7 and 8 
@@ -1502,24 +1509,7 @@ merged_TUD[is.na(merged_TUD$awake_time_at_12) & is.na(merged_TUD$awake_time_at_1
 #432 participants missing TUD at Wave 7 and 8 
 #Turn -9 into NA so it can be coded by Taren later
 relevant_lsacgrb10$Remoteness[relevant_lsacgrb10$Remoteness == -9] <- NA
-#Find the excluded participants 
-setdiff(relevant_lsacgrb10$hicid, merged_TUD$hicid) -> excludedlist
-relevant_lsacgrb10$excluded <- relevant_lsacgrb10$hicid %in% excludedlist
-mean(relevant_lsacgrb10$Remoteness[relevant_lsacgrb10$excluded == TRUE]) -> mean_excluded_remoteness
-sd(relevant_lsacgrb10$Remoteness[relevant_lsacgrb10$excluded == TRUE]) -> sd_excluded_remoteness   
-mean(relevant_lsacgrb10$Age[relevant_lsacgrb10$excluded == TRUE]) -> mean_excluded_age
-sd(relevant_lsacgrb10$Age[relevant_lsacgrb10$excluded == TRUE]) -> sd_excluded_age
-mean(relevant_lsacgrb10$SEP[relevant_lsacgrb10$excluded == TRUE]) -> mean_excluded_SEP
-sd(relevant_lsacgrb10$SEP[relevant_lsacgrb10$excluded == TRUE]) -> sd_excluded_SEP
-relevant_lsacgrb10 %>% 
-  filter(excluded == TRUE) %>% 
-    group_by(Sex) %>% 
-    summarise(percent = 100 * n() / length(excludedlist)) 
 
-relevant_lsacgrb10 %>% 
-   filter(excluded == TRUE) %>% 
-    group_by(Indigenous) %>% 
-    summarise(percent = 100 * n() / length(excludedlist))
 merged_TUD$day.x <- as.numeric(merged_TUD$day.x)
 merged_TUD$day <- as.numeric(merged_TUD$day)
 merged_TUD$day.y <- as.numeric(merged_TUD$day.y)
@@ -1554,30 +1544,53 @@ colnames(completed_merged_TUD)[colnames(completed_merged_TUD) == "school.y"] <- 
 colnames(completed_merged_TUD)[colnames(completed_merged_TUD) == "school"] <- "school_attendance_at_14"
 completed_merged_TUD$day_of_week_at_10[!((completed_merged_TUD$day_of_week_at_10 == 6) | (completed_merged_TUD$day_of_week_at_10 == 7))] <- 1
 completed_merged_TUD$day_of_week_at_10[(completed_merged_TUD$day_of_week_at_10 == 6) | (completed_merged_TUD$day_of_week_at_10 == 7)] <- 2
-  
+#Normalize data; first select relevant columns 
+completed_merged_TUD %>% 
+  select(6:14, 16:23, 30:38, 40:47, 54:62, 64:71) -> TUD_for_scaling
+TUD_standardize <- as.data.frame(scale(TUD_for_scaling))
+names(TUD_standardize) <- gsub("_at_", "_scaled_", names(TUD_standardize))
+#Add scaled data to original data 
+TUD_and_normalized_data <- cbind(completed_merged_TUD, TUD_standardize)
+TUD_and_normalized_data[nrow(sapply(TUD_and_normalized_data, max)) + 1, ] -> normalized_TUD_min_and_max
+options(scipen = 999)
+as.data.frame(sapply(TUD_and_normalized_data, min)) -> min_values
+min_values <- t(min_values)
+TUD_and_normalized_data <- rbind(TUD_and_normalized_data, min_values)
+as.data.frame(sapply(TUD_and_normalized_data, max)) -> max_values
+max_values <- t(max_values)
+TUD_and_normalized_data <- rbind(TUD_and_normalized_data, max_values)
+tail(TUD_and_normalized_data)
+row.names(TUD_and_normalized_data)[row.names(TUD_and_normalized_data) == "sapply(TUD_and_normalized_data, min)"] <- "Minimum"
+row.names(TUD_and_normalized_data)[row.names(TUD_and_normalized_data) == "sapply(TUD_and_normalized_data, max)"] <- "Maximum"
 ```
 
-```{r}
-completed_merged_TUD %>% 
-  select(hicid, 4:14, 16:23, 28:38, 40:47, 52:62, 64:71, 74:78) -> Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours
+```{r eval=FALSE, include=FALSE}
+TUD_and_normalized_data %>% 
+  select(1, 4:14, 16:23, 28:38, 40:47, 52:62, 64:71, 74:129) -> Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours
 colnames(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours)[colnames(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours) == "education_based_sedentary_behaviour_at_10"] <- "education_SB_at_10"
 names(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours) <- gsub("sedentary_behaviour", "SB", names(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours))
 names(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours) <- gsub("moderate_to_vigorous_intensity_physical_activity", "MVPA", names(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours))
 names(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours) <- gsub("light_intensity_physical_activity", "LPA", names(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours))
 names(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours) <- gsub("_leisure_time_", "_", names(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours))
+names(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours) <- gsub("transportation", "transport", names(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours))
+names(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours) <- gsub("recreational_", "", names(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours))
+names(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours) <- gsub("work_and_", "", names(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours))
+write_dta(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours, "Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours.dta")
+save(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours, file ='Z:/LSAC dataset/Study_2/Study_2/Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours.RData')
+
 foreign::write.dta(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours, "Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours.dta")
 save(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours, file = 'Z:/LSAC dataset/Study_2/Study_2/Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours.dta')
 ```
 
 
-```{r echo=TRUE}
+```{r echo=FALSE}
 ##Imputed missing data
 #Here: Checked that imputed variables are plausible 
 densityplot(imputed_merged_TUD)
 #Imputed values look reasonable! Woo hoooooo!!!!
 ```
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 skimr::skim(completed_merged_TUD %>% as_tibble() %>% mutate(Remoteness=as_factor(Remoteness)) %>% mutate(day_of_week_at_10=as_factor(day_of_week_at_10)) %>%  mutate(day_of_week_at_12=as_factor(day_of_week_at_12)) %>% mutate(day_of_week_at_14=as_factor(day_of_week_at_14)) %>% select(-hicid, -starts_with("awake_"), -starts_with("sleep_time"), -starts_with("total_"), -starts_with("uncodeable_"), -starts_with("day_"), -starts_with("school"))) -> relevant_descriptive_data
 relevant_descriptive_data$category <- c(1,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,1,1,1,1)
 relevant_descriptive_data$numeric.mean <- round(relevant_descriptive_data$numeric.mean, digits = 0)
@@ -1590,38 +1603,48 @@ relevant_descriptive_data$skim_variable <- str_replace_all(relevant_descriptive_
 colnames(relevant_descriptive_data)[colnames(relevant_descriptive_data) == "skim_variable"] <- "Characteristics"
 
 
+```
+
+```{r echo=FALSE}
+#Make Descriptive Statistics Table
 #install.packages("table1")
 library("table1")
-completed_merged_TUD2 <-completed_merged_TUD
-completed_merged_TUD2 <- data.frame(append(completed_merged_TUD2, list(Mean = ""), after =  1))
+#Select relevant columns for the descriptive statistics table
+completed_merged_TUD %>% 
+  select(-c(hicid, awake_time_at_10, awake_time_at_12, awake_time_at_14, sleep_time_at_10, sleep_time_at_12, sleep_time_at_14, day_of_week_at_10, day_of_week_at_12, day_of_week_at_14, school_attendance_at_10, school_attendance_at_12, school_attendance_at_14, uncodeable_activity_at_10, uncodeable_activity_at_12, uncodeable_activity_at_14, total_domain_specific_movement_behaviours, total_domain_specific_movement_behaviours.x, total_domain_specific_movement_behaviours.y, total_general_movement_behaviours, total_general_movement_behaviours.x, total_general_movement_behaviours.y)) -> completed_merged_TUD2
+#Arrange the columns in the appropriate order
+completed_merged_TUD2 %>% 
+  select(order(colnames(completed_merged_TUD2))) %>% 
+  relocate(c(Age, Indigenous, Remoteness, Sex, SEP), .before = active_transportation_at_10) %>% 
+  relocate(light_intensity_physical_activity_at_10:moderate_to_vigorous_intensity_physical_activity_at_14, .after = work_and_household_light_intensity_physical_activity_at_14) %>% 
+  relocate(c(sedentary_behaviour_at_10:sedentary_behaviour_at_14, sleep_at_10:sleep_at_14), .after = moderate_to_vigorous_intensity_physical_activity_at_14) -> descriptive_statistics 
+descriptive_statistics <- data.frame(append(descriptive_statistics, list("Subject_Details" = "", "Domain_Specific_Movement_Behaviours" = "", "General_Movement_Behaviours" = ""), after = 1))
+descriptive_statistics %>% 
+ relocate("Subject_Details", .before = Age) %>% 
+  relocate("Domain_Specific_Movement_Behaviours", .before = active_transportation_at_10) %>% 
+  relocate("General_Movement_Behaviours", .before = light_intensity_physical_activity_at_10) -> descriptive_statistics
+#Clean column names
+colnames(descriptive_statistics) <- gsub("_", " ", colnames(descriptive_statistics))
+colnames(descriptive_statistics) <- str_to_title(colnames(descriptive_statistics))
+colnames(descriptive_statistics) <- gsub("At", "at", colnames(descriptive_statistics))
+colnames(descriptive_statistics) <- gsub("To", "to", colnames(descriptive_statistics))
+colnames(descriptive_statistics) <- gsub("Light I", "Light-I", colnames(descriptive_statistics))
+colnames(descriptive_statistics) <- gsub("Moderate", "Moderate-", colnames(descriptive_statistics))
+colnames(descriptive_statistics) <- gsub("Vigorous", "Vigorous-", colnames(descriptive_statistics))
+rename(descriptive_statistics, "Socioeconomic Position" = Sep) -> descriptive_statistics
 
 
-completed_merged_TUD2$Indigenous <-
-  factor(completed_merged_TUD2$Indigenous, levels = c(1, 2, 3, 4),
+#Define factor variables
+descriptive_statistics$Indigenous <-
+  factor(descriptive_statistics$Indigenous, levels = c(1, 2, 3, 4),
          labels = c("Not Aboriginal", "Aboriginal", "Torres Strait Islander", "Both"))
-completed_merged_TUD2$Sex <-
-  factor(completed_merged_TUD2$Sex, levels = c(1, 2),
+descriptive_statistics$Sex <-
+  factor(descriptive_statistics$Sex, levels = c(1, 2),
          labels = c("Male", "Female"))
-completed_merged_TUD2$Remoteness <-
-  factor(completed_merged_TUD2$Remoteness, levels = c(0, 1, 2, 3, 4, 9),
-         labels = c("Highly Accessible", "Accessible", "Moderately Accessible", "Remote", "Very Remote", "Not determined"))
-labels <- list(
-    variables=list(Age="Age (years)",
-                   Indigenous="Indigenous",
-                   Remoteness="Remoteness",
-                   SEP="Socioeconomic Position",
-                   Sex="Sex"),
-  groups="Mean")
-
-
-label(completed_merged_TUD2$Indigenous) <- "Indigenous"
-label(completed_merged_TUD2$Remoteness) <- "Remoteness"
-label(completed_merged_TUD2$Sex) <- "Sex"
-label(completed_merged_TUD2$SEP) <- "Socioeconomic Position"
-label(completed_merged_TUD2$active_transportation_at_10:completed_merged_TUd2:structured_leisure_time_moderate_to_vigorous_intensity_physical_activity_at_10)
-units(completed_merged_TUD2$Age) <- "years"
-levels(completed_merged_TUD2$Mean) <- "Mean (SD) or Count (%)"
-strata <- "Mean (SD) or Count (%)"
+descriptive_statistics$Remoteness <-
+  factor(descriptive_statistics$Remoteness, levels = c(0, 1, 2, 3, 4, 9),
+         labels = c("Highly Accessible", "Accessible", "Moderately Accessible", "Remote", "Very Remote", "Not determined")) 
+#Write rendering function for Mean and counts
 my.render.cont <- function(x) {
     with(stats.apply.rounding(stats.default(x), digits=2), c("",
         "Mean (SD)"=sprintf("%s (&plusmn; %s)", MEAN, SD)))
@@ -1630,32 +1653,16 @@ my.render.cat <- function(x) {
     c("", sapply(stats.default(x), function(y) with(y,
         sprintf("%d (%0.0f %%)", FREQ, PCT))))
 }
-table1(strata, labels, groupspan=1,
-       render.continuous=my.render.cont, render.categorical=my.render.cat)
+#Create table
+#colorize <- function(x, color) {
+ # if (knitr::is_html_output()) {
+ ##   sprintf("<span style='color: %s;'>%s</span>", color,
+  #    x)
+ # }}
+table1(~ ., data = descriptive_statistics, overall = "Mean (SD) or Count (%)", footnote = "Age is measured in year; Socioeconomic Position is a composite score of income, educational attainment, and occupation status; Movement Behaviours are measured in minutes", caption = "Table 1. Descriptive Statistics.", render.continuous=my.render.cont, render.categorical=my.render.cat)
+#table1(~ ., data = descriptive_statistics, overall = "Mean (SD) or Count (%)", render.continuous=my.render.cont, render.categorical=my.render.cat) -> Table1_Stats
+#'r colorize(Table1_Stats, "black")'
 
-#I cannot select multiple consecutive columns. I've tried ":", c(:), [], [()], [c()]
-table1(~ Age + factor(Indigenous) + factor(Remoteness) + SEP + factor(Sex) + active_transportation_at_10 | Mean , data=completed_merged_TUD2, overall = F)
-
-relevant_descriptive_data %>% 
-  select("Characteristics", factor.top_counts, `Mean (SD) or %`, category) %>% 
-  arrange(category, Characteristics) %>% 
-  select(-category) %>% 
-  kbl(caption = "Table 1. Descriptive Statistics.") %>% 
-  kable_paper(full_width = F) %>% 
-  pack_rows("Subject Details", 1, 5) %>% 
-  pack_rows("General Movement Behaviours", 6, 17) %>% 
-  pack_rows("Domain-Specific Movement Behaviours", 18, 56) %>% 
-  footnote(general = "Remoteness: based on neighbourhood status remoteness area classification, 0 Highly accessible, 1 Accessible, 2 Moderately Accessible, 3 Remote, 4 Very remote; Socioeconomic Position: a composite score consisiting of parents' income, education, and occupational status; all movement behaviour means and standard deviations are measured in minutes; 10, 12, and 14 refer to the participants' age at the time of data collection")
-
-
-
-```
-
-```{r}
-install.packages("boot")
-library(boot) 
-
-melanoma2 <- melanoma
 ```
 
 
@@ -1729,14 +1736,30 @@ kbl(descriptive_stats, caption = "Table 1. Descriptive Statistics.") %>%
 
 ```
 
-```{r}
-#skimr::skim(completed_merged_TUD %>% as_tibble() %>% mutate(Remoteness=as_factor(Remoteness)) %>% select(-hicid, -starts_with("awake_"), -starts_with("sleep_time"), -starts_with("total_"), -starts_with("uncodeable_")))
-```
 
 
-```{r echo=TRUE}
+```{r echo=FALSE}
 #Test to see if there are differences between the included and excluded participants' sex, Indigenous status, and remoteness 
 #install.packages("rstatix")
+#Find the excluded participants 
+setdiff(relevant_lsacgrb10$hicid, merged_TUD$hicid) -> excludedlist
+relevant_lsacgrb10$excluded <- relevant_lsacgrb10$hicid %in% excludedlist
+mean(relevant_lsacgrb10$Remoteness[relevant_lsacgrb10$excluded == TRUE]) -> mean_excluded_remoteness
+sd(relevant_lsacgrb10$Remoteness[relevant_lsacgrb10$excluded == TRUE]) -> sd_excluded_remoteness   
+mean(relevant_lsacgrb10$Age[relevant_lsacgrb10$excluded == TRUE]) -> mean_excluded_age
+sd(relevant_lsacgrb10$Age[relevant_lsacgrb10$excluded == TRUE]) -> sd_excluded_age
+mean(relevant_lsacgrb10$SEP[relevant_lsacgrb10$excluded == TRUE]) -> mean_excluded_SEP
+sd(relevant_lsacgrb10$SEP[relevant_lsacgrb10$excluded == TRUE]) -> sd_excluded_SEP
+relevant_lsacgrb10 %>% 
+  filter(excluded == TRUE) %>% 
+    group_by(Sex) %>% 
+    summarise(percent = 100 * n() / length(excludedlist)) 
+
+relevant_lsacgrb10 %>% 
+   filter(excluded == TRUE) %>% 
+    group_by(Indigenous) %>% 
+    summarise(percent = 100 * n() / length(excludedlist))
+
 library("rstatix")
 relevant_lsacgrb10 %>% 
   t_test(Remoteness ~ excluded, detailed = TRUE) %>% 

@@ -49,34 +49,153 @@
 		list _traj_Group countG groupAPP occ occ_pp p TotProb if counter == 1
 		restore
 	end
-/*
-FAILED TRY WITH SCALING	
-// See if a basic two group solution can be fit. Does not use domains.
-	log using "~/Traj/log", text
-		// MODEL
-		traj, multgroups(2) /// 
-		var1(LPA_at_10 LPA_at_12 LPA_at_14) indep1(t0-t2) order1(2 2) model1(cnorm) min1(0) max1(930) ///
-		var2(MVPA_at_10 MVPA_at_12 MVPA_at_14) indep2(t0-t2) order2(2 2) model2(cnorm) min2(0) max2(860) ///
-		var3(SB_at_10 SB_at_12 SB_at_14) indep3(t0-t2) order3(2 2) model3(cnorm) min3(0) max3(1250) ///
-		var4(sleep_at_10 sleep_at_12 sleep_at_14) indep4(t0-t2) order4(2 2) model4(cnorm) min4(0) max4(1140) 
-		// PLOT
-		multtrajplot, xtitle(Age) ytitle1(LPA) ytitle2(MVPA) ytitle3(SB) ytitle3(Sleep) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		//graph save Graph "~/Downloads/Traj/Boys_TWOGROUPS.gph"
-	log close
-*/
 
+	/*
 // See if a basic two group solution can be fit. Does not use domains.
-	log using "~/Traj/log", text
-		// MODEL
-		traj, multgroups(2) /// 
-		var1(zLPA_at_10 zLPA_at_12 zLPA_at_14) indep1(t0-t2) order1(2 2) model1(cnorm) min1(-1.5) max1(11) ///
-		var2(zMVPA_at_10 zMVPA_at_12 zMVPA_at_14) indep2(t0-t2) order2(2 2) model2(cnorm) min2(-1.5) max2(7.5) ///
-		var3(zSB_at_10 zSB_at_12 zSB_at_14) indep3(t0-t2) order3(2 2) model3(cnorm) min3(-5) max3(4) ///
-		var4(zsleep_at_10 zsleep_at_12 zsleep_at_14) indep4(t0-t2) order4(2 2) model4(cnorm) min4(-6.5) max4(7) 
-		// PLOT
-		multtrajplot, xtitle(Age) ytitle1(LPA) ytitle2(MVPA) ytitle3(SB) ytitle4(Sleep) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
-		//graph save Graph "~/Downloads/Traj/Boys_TWOGROUPS.gph"
+	// MODEL
+	traj, multgroups(2) /// 
+	var1(LPA_scaled_10 LPA_scaled_12 LPA_scaled_14) indep1(t0-t2) order1(2 2) model1(cnorm) min1(-1.5) max1(8) ///
+	var2(MVPA_scaled_10 MVPA_scaled_12 MVPA_scaled_14) indep2(t0-t2) order2(2 2) model2(cnorm) min2(-1.5) max2(8) ///
+	var3(SB_scaled_10 SB_scaled_12 SB_scaled_14) indep3(t0-t2) order3(2 2) model3(cnorm) min3(-5) max3(4) ///
+	var4(sleep_scaled_10 sleep_scaled_10 sleep_scaled_10) indep4(t0-t2) order4(2 2) model4(cnorm) min4(-6.5) max4(7) 
+	// Summarise fit statistics
+	summary_table_procTraj
+	// Rename the additional variables
+	rename _traj_Group nd_twogroup_Group
+	rename _traj_ProbG1 nd_twogroup_ProbG1
+	rename _traj_ProbG2 nd_twogroup_ProbG2
+	// Plot
+	multtrajplot, xtitle(Age) ytitle1(LPA) ytitle2(MVPA) ytitle3(SB) ytitle4(Sleep) ylabel1(0(1)3) ylabel2(0(1)3) ylabel3(0 1)
+	graph save Graph "Z:\7-Data\M&B\LSAC dataset\Study_2\Study_2\stata_results\plots\no_domains-two_groups.gph"
 	log close
+	*/
+
+	
+// Start a log
+	log using "Z:\7-Data\M&B\LSAC dataset\Study_2\Study_2\stata_results\log.txt", text replace
+
+/* WITHOUT DOMAINS */
+	// TWO GROUPS
+		// MODEL
+			traj, multgroups(2) /// 
+			var1(LPA_scaled_10 LPA_scaled_12 LPA_scaled_14) indep1(t0-t2) order1(2 2) model1(cnorm) min1(-1.5) max1(8) ///
+			var2(MVPA_scaled_10 MVPA_scaled_12 MVPA_scaled_14) indep2(t0-t2) order2(2 2) model2(cnorm) min2(-1.5) max2(8) ///
+			var3(SB_scaled_10 SB_scaled_12 SB_scaled_14) indep3(t0-t2) order3(2 2) model3(cnorm) min3(-5) max3(4) ///
+			var4(sleep_scaled_10 sleep_scaled_10 sleep_scaled_10) indep4(t0-t2) order4(2 2) model4(cnorm) min4(-6.5) max4(7) 
+		// Summarise fit statistics
+			summary_table_procTraj
+		// Rename the additional variables
+			rename _traj_Group nd_twogroup_Group
+			rename _traj_ProbG1 nd_twogroup_ProbG1
+			rename _traj_ProbG2 nd_twogroup_ProbG2
+		// Plot
+			multtrajplot, xtitle(Age) ytitle1(LPA) ytitle2(MVPA) ytitle3(SB) ytitle4(Sleep) ylabel1(-1(1)1) ylabel2(-1(1)1) ylabel3(-1(1)1) ylabel4(-1(1)1)
+			graph export "Z:\7-Data\M&B\LSAC dataset\Study_2\Study_2\stata_results\plots\no-domains_two-groups.png", replace
+			
+	// THREE GROUPS
+		// MODEL
+			traj, multgroups(3) /// 
+			var1(LPA_scaled_10 LPA_scaled_12 LPA_scaled_14) indep1(t0-t2) order1(2 2 2) model1(cnorm) min1(-1.5) max1(8) ///
+			var2(MVPA_scaled_10 MVPA_scaled_12 MVPA_scaled_14) indep2(t0-t2) order2(2 2 2) model2(cnorm) min2(-1.5) max2(8) ///
+			var3(SB_scaled_10 SB_scaled_12 SB_scaled_14) indep3(t0-t2) order3(2 2 2) model3(cnorm) min3(-5) max3(4) ///
+			var4(sleep_scaled_10 sleep_scaled_10 sleep_scaled_10) indep4(t0-t2) order4(2 2 2) model4(cnorm) min4(-6.5) max4(7) 
+		// Summarise fit statistics
+			summary_table_procTraj
+		// Rename the additional variables
+			rename _traj_Group nd_threegroup_Group
+			rename _traj_ProbG1 nd_threegroup_ProbG1
+			rename _traj_ProbG2 nd_threegroup_ProbG2
+			rename _traj_ProbG3 nd_threegroup_ProbG3
+		// Plot
+			multtrajplot, xtitle(Age) ytitle1(LPA) ytitle2(MVPA) ytitle3(SB) ytitle4(Sleep) ylabel1(-1(1)1) ylabel2(-1(1)1) ylabel3(-1(1)1) ylabel4(-1(1)1)
+			graph export "Z:\7-Data\M&B\LSAC dataset\Study_2\Study_2\stata_results\plots\no-domains_three-groups.png", replace
+
+	// FOUR GROUPS
+		// MODEL
+			traj, multgroups(4) /// 
+			var1(LPA_scaled_10 LPA_scaled_12 LPA_scaled_14) indep1(t0-t2) order1(2 2 2 2) model1(cnorm) min1(-1.5) max1(8) ///
+			var2(MVPA_scaled_10 MVPA_scaled_12 MVPA_scaled_14) indep2(t0-t2) order2(2 2 2 2) model2(cnorm) min2(-1.5) max2(8) ///
+			var3(SB_scaled_10 SB_scaled_12 SB_scaled_14) indep3(t0-t2) order3(2 2 2 2) model3(cnorm) min3(-5) max3(4) ///
+			var4(sleep_scaled_10 sleep_scaled_10 sleep_scaled_10) indep4(t0-t2) order4(2 2 2 2) model4(cnorm) min4(-6.5) max4(7) 
+		// Summarise fit statistics
+			summary_table_procTraj
+		// Rename the additional variables
+			rename _traj_Group nd_fourgroup_Group
+			rename _traj_ProbG1 nd_fourgroup_ProbG1
+			rename _traj_ProbG2 nd_fourgroup_ProbG2
+			rename _traj_ProbG3 nd_fourgroup_ProbG3
+			rename _traj_ProbG4 nd_fourgroup_ProbG4
+		// Plot
+			multtrajplot, xtitle(Age) ytitle1(LPA) ytitle2(MVPA) ytitle3(SB) ytitle4(Sleep) ylabel1(-1(1)1) ylabel2(-1(1)1) ylabel3(-1(1)1) ylabel4(-1(1)1)
+			graph export "Z:\7-Data\M&B\LSAC dataset\Study_2\Study_2\stata_results\plots\no-domains_four-groups.png", replace
+			
+	// FIVE GROUPS
+		// MODEL
+			traj, multgroups(5) /// 
+			var1(LPA_scaled_10 LPA_scaled_12 LPA_scaled_14) indep1(t0-t2) order1(2 2 2 2 2) model1(cnorm) min1(-1.5) max1(8) ///
+			var2(MVPA_scaled_10 MVPA_scaled_12 MVPA_scaled_14) indep2(t0-t2) order2(2 2 2 2 2) model2(cnorm) min2(-1.5) max2(8) ///
+			var3(SB_scaled_10 SB_scaled_12 SB_scaled_14) indep3(t0-t2) order3(2 2 2 2 2) model3(cnorm) min3(-5) max3(4) ///
+			var4(sleep_scaled_10 sleep_scaled_10 sleep_scaled_10) indep4(t0-t2) order4(2 2 2 2 2) model4(cnorm) min4(-6.5) max4(7) 
+		// Summarise fit statistics
+			summary_table_procTraj
+		// Rename the additional variables
+			rename _traj_Group nd_fivegroup_Group
+			rename _traj_ProbG1 nd_fivegroup_ProbG1
+			rename _traj_ProbG2 nd_fivegroup_ProbG2
+			rename _traj_ProbG3 nd_fivegroup_ProbG3
+			rename _traj_ProbG4 nd_fivegroup_ProbG4
+			rename _traj_ProbG5 nd_fivegroup_ProbG5
+		// Plot
+			multtrajplot, xtitle(Age) ytitle1(LPA) ytitle2(MVPA) ytitle3(SB) ytitle4(Sleep) ylabel1(-1(1)1) ylabel2(-1(1)1) ylabel3(-1(1)1) ylabel4(-1(1)1)
+			graph export "Z:\7-Data\M&B\LSAC dataset\Study_2\Study_2\stata_results\plots\no-domains_five-groups.png", replace
+			
+	// SIX GROUPS
+		// MODEL
+			traj, multgroups(6) /// 
+			var1(LPA_scaled_10 LPA_scaled_12 LPA_scaled_14) indep1(t0-t2) order1(2 2 2 2 2 2) model1(cnorm) min1(-1.5) max1(8) ///
+			var2(MVPA_scaled_10 MVPA_scaled_12 MVPA_scaled_14) indep2(t0-t2) order2(2 2 2 2 2 2) model2(cnorm) min2(-1.5) max2(8) ///
+			var3(SB_scaled_10 SB_scaled_12 SB_scaled_14) indep3(t0-t2) order3(2 2 2 2 2 2) model3(cnorm) min3(-5) max3(4) ///
+			var4(sleep_scaled_10 sleep_scaled_10 sleep_scaled_10) indep4(t0-t2) order4(2 2 2 2 2 2) model4(cnorm) min4(-6.5) max4(7) 
+		// Summarise fit statistics
+			summary_table_procTraj
+		// Rename the additional variables
+			rename _traj_Group nd_sixgroup_Group
+			rename _traj_ProbG1 nd_sixgroup_ProbG1
+			rename _traj_ProbG2 nd_sixgroup_ProbG2
+			rename _traj_ProbG3 nd_sixgroup_ProbG3
+			rename _traj_ProbG4 nd_sixgroup_ProbG4
+			rename _traj_ProbG5 nd_sixgroup_ProbG5
+			rename _traj_ProbG6 nd_sixgroup_ProbG6
+		// Plot
+			multtrajplot, xtitle(Age) ytitle1(LPA) ytitle2(MVPA) ytitle3(SB) ytitle4(Sleep) ylabel1(-1(1)1) ylabel2(-1(1)1) ylabel3(-1(1)1) ylabel4(-1(1)1)
+			graph export "Z:\7-Data\M&B\LSAC dataset\Study_2\Study_2\stata_results\plots\no-domains_six-groups.png", replace
+	log close
+
+/* OLD CODE
+/* WITH DOMAINS */
+	// TWO GROUPS
+		// MODEL
+			traj, multgroups(2) /// 
+			var1(unstructured_LPA_scaled_10 unstructured_LPA_scaled_12 unstructured_LPA_scaled_14) indep1(t0-t2) order1(2 2) model1(cnorm) min1(-1) max1(9.5) ///
+			var2(household_LPA_scaled_10 household_LPA_scaled_12 household_LPA_scaled_14) indep2(t0-t2) order2(2 2) model2(cnorm) min2(-1.5) max2(12.5) ///
+			var3(structured_MVPA_scaled_10 structured_MVPA_scaled_12 structured_MVPA_scaled_14) indep3(t0-t2) order3(2 2) model3(cnorm) min3(-1) max3(9) ///
+			var4(unstructured_MVPA_scaled_10 unstructured_MVPA_scaled_12 unstructured_MVPA_scaled_14) indep4(t0-t2) order4(2 2) model4(cnorm) min4(-1) max4(12) ///
+			var5(education_based_SB_scaled_10 education_based_SB_scaled_12 education_based_SB_scaled_14) indep5(t0-t2) order5(2 2) model5(cnorm) min5(-1.5) max5(3.5) ///
+			var6(leisure_time_SB_scaled_10 leisure_time_SB_scaled_12 leisure_time_SB_scaled_14) indep6(t0-t2) order6(2 2) model6(cnorm) min6(-1.5) max6(6.5) ///
+			var7(self_care_SB_scaled_10 self_care_SB_scaled_10 self_care_SB_scaled_10) indep7(t0-t2) order7(2 2) model7(cnorm) min7(-1) max7(30)
+		// Summarise fit statistics
+			summary_table_procTraj
+		// Rename the additional variables
+			rename _traj_Group wd_twogroup_Group
+			rename _traj_ProbG1 wd_twogroup_ProbG1
+			rename _traj_ProbG2 wd_twogroup_ProbG2
+		// Plot
+			multtrajplot, xtitle(Age) ytitle1(Unstructured LPA) ytitle2(Household LPA) ytitle3(Structured MVPA) ytitle4(Unstructured MVPA) ///
+										ytitle5(Education SB) ytitle6(Leisure Time SB) ytitle6(Self Care SB) ///
+										ylabel1(-1(1)1) ylabel2(-1(1)1) ylabel3(-1(1)1) ylabel4(-1(1)1) ylabel5(-1(1)1) ylabel6(-1(1)1) ylabel7(-1(1)1)
+			graph export "Z:\7-Data\M&B\LSAC dataset\Study_2\Study_2\stata_results\plots\with-domains_two-groups.png", replace
+	
+
 	
 	
 
@@ -249,3 +368,4 @@ FAILED TRY WITH SCALING
 		traj if SEX==1, multgroups(3) var1(Sleep_Y5 Sleep_Y8 Sleep_Y10 Sleep_Y13 Sleep_Y16) indep1(t0-t4) order1(1 2 1) model1(cnorm) min1(0) max1(12) ///
 		var2(TV_Y5 TV_Y8 TV_Y10 TV_Y13 TV_Y16) indep2(t0-t4) order2(2 3 2) model2(cnorm) min2(0) max2(5) ///
 		var3(orgsport_y5 orgsport_y8 orgsport_y10 orgsport_y13 orgsport_y16 ) indep3(t0-t4) order3(2 3 3) model3(logit) outcome(A20_MCS) omodel(normal)
+*/

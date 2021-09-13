@@ -20,6 +20,12 @@ library("kableExtra")
 #install.packages("magrittr")
 library("stringr")
 library("magrittr")
+#install.packages("devtools")
+library("devtools")
+#install.packages("gbm")
+#av <- available.packages(filters=list())
+#av[av[, "Package"] == "gbmt", ] 
+library("gbm")
 ```
 
 ```{r include=FALSE}
@@ -75,7 +81,6 @@ d10$end_time_num[next_day_finish] <- (d10$end_time_num[next_day_finish] + 86400)
 #Subtract start time from end time to get the total time spent in each activity 
 d10$total_time_num <- d10$end_time_num - d10$start_time_num
 #hist(d$total_time_num)
-
 #Convert total time from seconds to minutes 
 d10$total_minutes <- d10$total_time_num %/% 60
 #Get rid of NAs for sleep time because nighttime sleep cannot be calculated, since less than 5% (6/3460) participants have missing sleep data it is OK to delete them without biasing the results 
@@ -87,7 +92,7 @@ d10_cleaned
 ```{r include=FALSE}
 #Assign TUD activity codes to domain-specific variables for B-cohort at age 10
 unstr_lt_pa <- c(427, 428, 430, 454, 463, 464, 465, 466, 491, 450, 451)
-wrk_hh_pa <- c(1,11,31,41,51, 61, 71, 82, 83, 84, 91, 201, 211, 221,231,301, 311, 321, 331, 341, 342, 344, 351, 361, 362, 363, 364, 365, 366, 367, 368, 371, 381)
+wrk_hh_pa <- c(1,11,31,41,51, 61, 71, 82, 83, 84, 91, 201, 221,231,301, 311, 321, 331, 341, 342, 344, 351, 361, 362, 363, 364, 365, 366, 367, 368, 371, 381)
 active_trans <- c(901, 911)
 str_lt_mvpa <- c(401, 402, 403, 404, 405, 406, 407, 408, 411, 412, 413, 414, 415, 416, 417, 418, 440)
 unstr_lt_mvpa <- c(421, 422, 423, 424, 425, 426)
@@ -95,7 +100,7 @@ education_sb <- c(21, 81, 501, 521, 531, 541, 581, 601, 701)
 lt_sb <- c(281, 312, 981, 481, 462, 101, 511, 542, 543, 544, 545, 548, 551, 552, 555, 561, 591, 452, 453, 455, 456, 457, 458, 471, 472, 473)
 passive_trans <- c(921, 931, 941)
 recreational_screentime <- c(461, 611, 612, 621, 631, 641, 651, 661, 671, 681, 691, 841, 851)
-selfcare_sb <- c(241, 251, 261, 271)
+selfcare_sb <- c(211, 241, 251, 261, 271)
 social_sb <- c(802, 811, 821, 831, 861, 871, 881)
 daytime_naps <- 571
 uncodeable_activity <- c(971, 991, 998)
@@ -178,7 +183,8 @@ d10_cleaned %>%
     (mainact %in% recreational_screentime & secact1 %in% no_secact) ~ "Recreational Screen Time",
     (mainact %in% selfcare_sb & secact1 %in% no_secact) ~ "Self Care Sedentary Behaviour",
     (mainact %in% social_sb & secact1 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
-    (mainact %in% daytime_naps & secact1 %in% no_secact) ~ "Daytime Naps",
+    (mainact %in% daytime_naps & secact1 %in% no_secact & (total_minutes <= 240)) ~ "Daytime Naps",
+    (mainact %in% daytime_naps & secact1 %in% no_secact & (total_minutes > 240)) ~ "Nighttime Sleep 1",
     (mainact %in% uncodeable_activity & secact1 %in% no_secact) ~ "Uncodeable Activity",
     (mainact %in% unstr_lt_pa & secact1 %in% unstr_lt_pa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
     (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Work and Household Light-Intensity Physical Activity",
@@ -368,7 +374,7 @@ d10_cleaned %>%
     (mainact %in% active_trans & secact1 %in% social_sb & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Active Transportation",
     (mainact %in% recreational_screentime & secact1 %in% education_sb & secact2 %in% no_secact) ~ "Recreational Screen Time",
     (mainact %in% recreational_screentime & secact1 %in% passive_trans & secact2 %in% no_secact) ~ "Passive Transportation",
-    (mainact %in% education_sb & secact1 %in% passive_trans & secact2 %in% lt_sb) ~ "Passive Transportation",
+    (mainact %in% education_sb & secact1 %in% passive_trans & secact2 %in% lt_sb) ~ "Education-Based Sedentary Behaviour",
     (mainact %in% selfcare_sb & secact1 %in% lt_sb & secact2 %in% no_secact) ~ "Self Care Sedentary Behaviour",
     (mainact %in% recreational_screentime & secact1 %in% unstr_lt_mvpa & secact2 %in% lt_sb & secact3 %in% no_secact) ~ "Recreational Screen Time",
     (mainact %in% wrk_hh_pa & secact1 %in% lt_sb & secact2 %in% social_sb & secact3 %in% no_secact) ~ "Leisure Time Sedentary Behaviour",
@@ -433,6 +439,7 @@ d10_cleaned %>%
     
   )) -> long_d10
 
+
 #Check to make sure there are no missing decisions
 #long_d10[is.na(long_d10$domain_specific_movement_behaviour),]
 
@@ -461,13 +468,16 @@ hist(total_sleep_after_midnight)
 #Convert sleep time into minutes 
 nighttime_sleep <- wide_d10$sleep_time_num / 60
 #Add nighttime sleep into dataset
-wide_d10$"Nighttime Sleep" <- (nighttime_sleep)
+wide_d10$"Nighttime Sleep 2" <- (nighttime_sleep)
+#Add nighttime sleep 1 and nighttime sleep 2 
+wide_d10$"Nighttime Sleep" <- wide_d10$`Nighttime Sleep 1` + wide_d10$`Nighttime Sleep 2`
+wide_d10 <- wide_d10 %>%  select(-c(`Nighttime Sleep 1`, `Nighttime Sleep 2`))
 
 #Add new columns for general movement behaviours
 wide_d10$"Light-Intensity Physical Activity" <- wide_d10$`Active Transportation` + wide_d10$`Work and Household Light-Intensity Physical Activity` + wide_d10$`Unstructured Leisure Time Light-Intensity Physical Activity`
 wide_d10$"Moderate- to Vigorous- Intensity Physical Activity" <- wide_d10$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d10$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
 wide_d10$"Sedentary Behaviour" <- wide_d10$`Leisure Time Sedentary Behaviour` + wide_d10$`Social-Based Sedentary Behaviour` + wide_d10$`Recreational Screen Time` + wide_d10$`Education-Based Sedentary Behaviour` + wide_d10$`Self Care Sedentary Behaviour` + wide_d10$`Passive Transportation`
-wide_d10$"Sleep" <- wide_d10$`Daytime Naps` + wide_d10$`Nighttime Sleep` 
+wide_d10$"Sleep" <- wide_d10$`Daytime Naps` + wide_d10$`Nighttime Sleep`
 
 #Rename movement behaviour variables to be "at 10" 
 rename(wide_d10, c("Light-Intensity Physical Activity at 10" = "Light-Intensity Physical Activity", "Moderate- to Vigorous- Intensity Physical Activity at 10" = "Moderate- to Vigorous- Intensity Physical Activity", "Sedentary Behaviour at 10" = "Sedentary Behaviour", "Sleep at 10" = "Sleep", "Work and Household Light-Intensity Physical Activity at 10" = "Work and Household Light-Intensity Physical Activity", "Unstructured Leisure Time Light-Intensity Physical Activity at 10" = "Unstructured Leisure Time Light-Intensity Physical Activity", "Active Transportation at 10" = "Active Transportation", "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 10" = "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 10" = "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Leisure Time Sedentary Behaviour at 10" = "Leisure Time Sedentary Behaviour", "Social-Based Sedentary Behaviour at 10" = "Social-Based Sedentary Behaviour", "Recreational Screen Time at 10" = "Recreational Screen Time", "Education-Based Sedentary Behaviour at 10" = "Education-Based Sedentary Behaviour", "Self Care Sedentary Behaviour at 10" = "Self Care Sedentary Behaviour", "Daytime Naps at 10" = "Daytime Naps", "Nighttime Sleep at 10" = "Nighttime Sleep", "Passive Transportation at 10" = "Passive Transportation", "Awake Time at 10" ="awake_time_num", "Sleep Time at 10" = "sleep_time_num", "Uncodeable Activity at 10" = "Uncodeable Activity")) -> wide_d10
@@ -485,6 +495,7 @@ wide_d10[wide_d10$total_general_movement_behaviours < 1440,]
 #Participants who are under 1440 minutes have different "awake time" and "start time" for their first activity; the time between these activities matched the time these participants were under a total day 
 #Check the extreme cases to see if this is still true
 wide_d10[wide_d10$total_general_movement_behaviours < 1400,]
+#Yep!
 #Change -9 in remoteness and school to NA. First see if there are any -9 on school days
 wide_d10[(wide_d10$school == -9) & !(wide_d10$day == 6 | wide_d10$day == 7),] 
 #Nope! Happy news! Now change -9 to 2 since the children were not in school 
@@ -493,54 +504,94 @@ wide_d10
 ```
 
 ```{r eval=FALSE, include=FALSE}
-library(ggplot2)
-library(tidyr)
-ggplot(gather(wide_d10, cols, value), aes(x = value)) + 
-       geom_histogram(binwidth = 20) + facet_grid(.~cols)
-wide_d10 %>% select_if(is.numeric) %>%  gather(cols, value) %>%  ggplot(aes(x = value)) + geom_histogram() + facet_grid(.~cols)
-library(Hmisc)
-hist.data.frame(wide_d10)
-hist(wide_d10$`Moderate- to Vigorous- Intensity Physical Activity at 10`)
-wide_d10[wide_d10$`Moderate- to Vigorous- Intensity Physical Activity at 10` > 120,]
-wide_d10[wide_d10$`Moderate- to Vigorous- Intensity Physical Activity at 10` > 350,]
-hist(wide_d10$`Recreational Screen Time at 10`)
-hist(wide_d10$`Sedentary Behaviour at 10`)
-wide_d10[wide_d10$`Sedentary Behaviour at 10` > 800,]
-wide_d10[wide_d10$`Recreational Screen Time at 10` > 400,]
-hist(wide_d10$`Sleep at 10`)
-hist(wide_d10$`Active Transportation at 10`)
-hist(wide_d10$`Daytime Naps at 10`)
-for(i in 1:ncol(wide_d10)){
-  wide_d10[ ,i] <- hist(wide_d10[ , i])
-  hist()
-}
+wide_d10 -> wide_d10_outliers
+hist(wide_d10_outliers$`Active Transportation at 10`)
+wide_d10_outliers[wide_d10_outliers$`Active Transportation at 10` > 300,]
+#Very abnormal; 10 year-olds don't walk from 7pm to 1 in the morning! 
+wide_d10_outliers[((wide_d10_outliers$`Active Transportation at 10` > 240) & (wide_d10_outliers$`Active Transportation at 10` <= 300)),]
+#Seems a bit odd that one kids walked for 4.5 hours, but everything else is normal. Keep 
+hist(wide_d10_outliers$`Daytime Naps at 10`)
+wide_d10_outliers[wide_d10_outliers$`Daytime Naps at 10` > 300,]
+#Top 2 times appear to reports of a restless night sleep, not naps;covert these to nighttime sleep  
+wide_d10_outliers[wide_d10_outliers$`Daytime Naps at 10` >= 240,]
+#Same as above, woke up early to have a drink and then went back to bed for several hours before starting the day except participant exactly at 240 min; convert to nighttime sleep (not 240 participant)
+wide_d10_outliers[((wide_d10_outliers$`Daytime Naps at 10` >= 180) & (wide_d10_outliers$`Daytime Naps at 10` <= 240)),]
+#Long naps, but nothing abnormal
+hist(wide_d10_outliers$`Education-Based Sedentary Behaviour at 10`)
+wide_d10_outliers[wide_d10_outliers$`Education-Based Sedentary Behaviour at 10` > 600,]
+#Education looks OK, longer instances are after school classes and homework
+hist(wide_d10_outliers$`Leisure Time Sedentary Behaviour at 10`)
+wide_d10_outliers[wide_d10_outliers$`Leisure Time Sedentary Behaviour at 10` > 600,]
+#4/6 reported eating for almost the entire day; definitely exclude >700
+wide_d10_outliers[((wide_d10_outliers$`Leisure Time Sedentary Behaviour at 10` >= 550) & (wide_d10_outliers$`Leisure Time Sedentary Behaviour at 10` < 600)),]
+#All 550 minutes exactly looked OK, greater than 550 had an abnormally long amount of eating/drink time (3.75+ hours) or several activities were labeled as "not in coder" but were coded as eating/drinking; exclude
+hist(wide_d10_outliers$`Passive Transportation at 10`)
+wide_d10_outliers[wide_d10_outliers$`Passive Transportation at 10` >= 400,]
+wide_d10_outliers[((wide_d10_outliers$`Passive Transportation at 10` > 300) & (wide_d10_outliers$`Passive Transportation at 10` < 400)),]
+#Lower ends it looks like a typical day with long commutes; higher ends are mixed with abnormal days and 
+wide_d10_outliers[((wide_d10_outliers$`Passive Transportation at 10` > 360) & (wide_d10_outliers$`Passive Transportation at 10` <= 400)),]
+wide_d10_outliers[((wide_d10_outliers$`Passive Transportation at 10` > 300) & (wide_d10_outliers$`Passive Transportation at 10` <= 360)),]
+#All activites at 301 min appeared to be normal days with longer commuters
+wide_d10_outliers[((wide_d10_outliers$`Passive Transportation at 10` > 240) & (wide_d10_outliers$`Passive Transportation at 10` <= 300)),]
+#Appear to be normal days 
+hist(wide_d10_outliers$`Recreational Screen Time at 10`)
+wide_d10_outliers[wide_d10_outliers$`Recreational Screen Time at 10` > 400,]
+#Looks like normal days
+hist(wide_d10_outliers$`Self Care Sedentary Behaviour at 10`)
+wide_d10_outliers[wide_d10_outliers$`Self Care Sedentary Behaviour at 10` > 300,]
+#Both children with Self Care SB >300min were sick; consider excluding because they are outliers due to their illness which is not a typical day 
+wide_d10_outliers[wide_d10_outliers$`Self Care Sedentary Behaviour at 10` > 250,]
+#1 extra participant, activity "take medication" lasted for 4.5 hours starting at 4:30am; consider also making an outlier 
+wide_d10_outliers[wide_d10_outliers$`Self Care Sedentary Behaviour at 10` > 150,]
+#3 extra participants; either sick, at the hospital, or taking medication 
+wide_d10_outliers[((wide_d10_outliers$`Self Care Sedentary Behaviour at 10` > 120) & (wide_d10_outliers$`Self Care Sedentary Behaviour at 10` <= 150)),]
+#Doctor appointments 
+wide_d10_outliers[((wide_d10_outliers$`Self Care Sedentary Behaviour at 10` > 90) & (wide_d10_outliers$`Self Care Sedentary Behaviour at 10`<= 120)),]
+#4 sick, 2 appointments, 1 massage
+wide_d10_outliers[(wide_d10_outliers$`Self Care Sedentary Behaviour at 10` == 90),]
+wide_d10_outliers[((wide_d10_outliers$`Self Care Sedentary Behaviour at 10` >= 60) & (wide_d10_outliers$`Self Care Sedentary Behaviour at 10` < 90)),]
+#All appointments or hospital visits, but there are 128 participants that fall into this category. I don't think they would be considered outliers
+hist(wide_d10_outliers$`Social-Based Sedentary Behaviour at 10`)
+wide_d10_outliers[wide_d10_outliers$`Social-Based Sedentary Behaviour at 10` >= 600,]
+#Looks OK
+hist(wide_d10_outliers$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 10`)
+wide_d10_outliers[wide_d10_outliers$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 10` > 350,]
+#All playing team sports - they appear to be at competition weekends or camps, exclude because although they may be typical weekends it is reasonable to think that the participants were resting/waiting for long periods during their MVPA; therefore, these numbers are probably not accurate in terms of movement
+hist(wide_d10_outliers$`Unstructured Leisure Time Light-Intensity Physical Activity at 10`)
+wide_d10_outliers[wide_d10_outliers$`Unstructured Leisure Time Light-Intensity Physical Activity at 10` >= 600,]
+#Participant with 660 minutes looks abnormal; only had 5 activies for the whole day with an 11 hour bushwalk with no breaks and straight to bed
+wide_d10_outliers[((wide_d10_outliers$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 10` > 330) & (wide_d10_outliers$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 10` <= 360)),]
+#Aligned with structured MVPA
+hist(wide_d10_outliers$`Work and Household Light-Intensity Physical Activity at 10`)
+wide_d10_outliers[wide_d10_outliers$`Work and Household Light-Intensity Physical Activity at 10`> 400,]
+#Participant with only 800 min only recorded 1 activity for the entire day; all other participants looked like they were doirng chores all day - seemed reasonable as it was broken up with break for eating, etc. 
+hist(wide_d10_outliers$`Nighttime Sleep at 10`)
+wide_d10_outliers[wide_d10_outliers$`Nighttime Sleep at 10` >= 1000,]
+#Could be a typical weekend; no mention of being sick
+wide_d10_outliers[((wide_d10_outliers$`Nighttime Sleep at 10` > 840) & (wide_d10_outliers$`Nighttime Sleep at 10` <= 1000)),]
+#Look like normal days; not mention of being sick
+
+#Remove Wave 6 outliers
+wide_d10_outliers <- wide_d10_outliers[!(wide_d10_outliers$`Active Transportation at 10` >= 300),]
+#3 participants excluded
+wide_d10_outliers <- wide_d10_outliers[!(wide_d10_outliers$`Leisure Time Sedentary Behaviour at 10` > 550),]
+#11 participants excluded
+wide_d10_outliers <- wide_d10_outliers[!(wide_d10_outliers$`Passive Transportation at 10` >= 302),]
+#32 participants excluded
+wide_d10_outliers <- wide_d10_outliers[!(wide_d10_outliers$`Self Care Sedentary Behaviour at 10` >= 90),]
+#79 participants excluded
+wide_d10_outliers <- wide_d10_outliers[!(wide_d10_outliers$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 10` >= 350),]
+#7 participants excluded
+wide_d10_outliers <- wide_d10_outliers[!(wide_d10_outliers$`Unstructured Leisure Time Light-Intensity Physical Activity at 10` > 660),]
+#1 participants met critiera, but was excluded in one of the above code lines - therefore no further participants were excluded at this step 
+wide_d10_outliers <- wide_d10_outliers[!(wide_d10_outliers$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 10` >= 350),]
+#3 participants excluded
+wide_d10_outliers <- wide_d10_outliers[!(wide_d10_outliers$`Work and Household Light-Intensity Physical Activity at 10` >= 800),]
+#1 participant excluded
+wide_d10_outliers <- wide_d10_outliers[!(wide_d10_outliers$`Nighttime Sleep at 10` >= 1000),] -> wide_d10_outliers_removed
+#1 participant excluded
 
 ```
-
-
-
-```{r eval=FALSE, include=FALSE}
-#Not shown: I uploaded time-use diaries for the B-cohort from the LSAC dataset at Waves 6-8 (the participants were aged 10-14), I calculated sleep time for each participant, how much time they spent in each participant, got rid of participants who didn't report sleep time or had typos in their time-use diary, assigned each activity to specific general and domain-specific movement behaviours based on decision rules, and converted the data to wide format
-#Check to see participants total minutes in a histogram
-hist(wide_d10$total_general_movement_behaviours)
-#Filter by participants who are over 1440 minutes to see what the issue is 
-wide_d10[wide_d10$total_general_movement_behaviours > 1440,]
-#These participants had typos in their diary, but weren't flagged in the original TUD. Delete these participants because they should have been flagged by alarm1. 
-wide_d10 <- wide_d10[!(wide_d10$total_general_movement_behaviours > 1440),]
-#Participants are either at or under 1440 minutes; filter the participants who have less than 1440 minutes to figure out why this is the case
-wide_d10[wide_d10$total_general_movement_behaviours < 1440,]
-#Participants who are under 1440 minutes have different "awake time" and "start time" for their first activity; the time between these activities matched the time these participants were under a total day 
-#Check the extreme cases to see if this is still true
-wide_d10[wide_d10$total_general_movement_behaviours < 1400,]
-#Yep!
-wide_d10[is.na(wide_d10$hicid),]
-#Double-check unusually large sedentary behaviours
-wide_d10[wide_d10$`Sedentary Behaviour at 10` > 900,]
-#After cross checking behaviours, I found these participants were primarily sedentary 
-#These steps were done for all 3 time-use diaries 
-```
-
-
 
 ```{r eval=FALSE, include=FALSE}
 #Decide how many profiles should be used for latent profile analysis for general movement behaviours (This is just a test to make sure this works with the dataset; we'll do a multi trajectory analysis with the longitudinal data)
@@ -712,7 +763,8 @@ d12_cleaned %>%
     (mainact %in% recreational_screentime & secact1 %in% no_secact) ~ "Recreational Screen Time",
     (mainact %in% selfcare_sb & secact1 %in% no_secact) ~ "Self Care Sedentary Behaviour",
     (mainact %in% social_sb & secact1 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
-    (mainact %in% daytime_naps & secact1 %in% no_secact) ~ "Daytime Naps",
+    (mainact %in% daytime_naps & secact1 %in% no_secact & !(hicid == 14105383)) ~ "Daytime Naps",
+    (mainact %in% daytime_naps & secact1 %in% no_secact & (hicid == 14105383)) ~ "Nighttime Sleep 1",
     (mainact %in% uncodeable_activity & secact1 %in% no_secact) ~ "Uncodeable Activity",
     (mainact %in% unstr_lt_pa & secact1 %in% unstr_lt_pa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
     (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Work and Household Light-Intensity Physical Activity",
@@ -998,8 +1050,9 @@ hist(total_sleep_after_midnight)
 #Convert sleep time into minutes 
 nighttime_sleep <- wide_d12$sleep_time_num / 60
 #Add nighttime sleep into dataset
-wide_d12$"Nighttime Sleep" <- (nighttime_sleep)
-
+wide_d12$"Nighttime Sleep 2" <- (nighttime_sleep)
+wide_d12$"Nighttime Sleep" <- wide_d12$`Nighttime Sleep 1` + wide_d12$`Nighttime Sleep 2`
+wide_d12 <- wide_d12 %>%  select(-c(`Nighttime Sleep 1`, `Nighttime Sleep 2`))
 #Add new columns for general movement behaviours
 wide_d12$"Light-Intensity Physical Activity" <- wide_d12$`Active Transportation` + wide_d12$`Work and Household Light-Intensity Physical Activity` + wide_d12$`Unstructured Leisure Time Light-Intensity Physical Activity`
 wide_d12$"Moderate- to Vigorous- Intensity Physical Activity" <- wide_d12$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d12$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
@@ -1029,6 +1082,70 @@ wide_d12$school[wide_d12$school == -9] <- 2
 wide_d12
 
 ```
+
+```{r}
+wide_d12 -> wide_d12_outliers
+hist(wide_d12_outliers$`Active Transportation at 12`)
+wide_d12_outliers[wide_d12_outliers$`Active Transportation at 12` > 300,]
+#Very abnormal; 10 year-olds don't walk from 7pm to 1 in the morning! 
+wide_d12_outliers[((wide_d12_outliers$`Active Transportation at 12` > 240) & (wide_d12_outliers$`Active Transportation at 12` <= 300)),]
+#Same as previous wave
+hist(wide_d12_outliers$`Daytime Naps at 12`)
+wide_d12_outliers[wide_d12_outliers$`Daytime Naps at 12` > 300,]
+#Mainly just long naps; 14105383 restless nighttime sleep - convert this one
+hist(wide_d12_outliers$`Education-Based Sedentary Behaviour at 12`)
+wide_d12_outliers[wide_d12_outliers$`Education-Based Sedentary Behaviour at 12` > 600,]
+#Education looks OK, longer instances are after school classes, homework, and reading
+hist(wide_d12_outliers$`Leisure Time Sedentary Behaviour at 12`)
+wide_d12_outliers[wide_d12_outliers$`Leisure Time Sedentary Behaviour at 12` > 600,]
+#Looks OK
+hist(wide_d12_outliers$`Passive Transportation at 12`)
+wide_d12_outliers[wide_d12_outliers$`Passive Transportation at 12` >= 300,]
+#300 minuts all long commutes; 305-330 mixed between long commutes and travel day; >330 exclude as outliers
+hist(wide_d12_outliers$`Recreational Screen Time at 12`)
+wide_d12_outliers[wide_d12_outliers$`Recreational Screen Time at 12` > 800,]
+#Exclude >1000 because participant also didn't go to school that day for a special circumstance
+hist(wide_d12_outliers$`Self Care Sedentary Behaviour at 12`)
+wide_d12_outliers[wide_d12_outliers$`Self Care Sedentary Behaviour at 12` >= 90,]
+hist(wide_d12_outliers$`Social-Based Sedentary Behaviour at 12`)
+wide_d12_outliers[wide_d12_outliers$`Social-Based Sedentary Behaviour at 12` >= 600,]
+#>800 same activity repeated in succession without other activities
+hist(wide_d12_outliers$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 12`)
+wide_d12_outliers[wide_d12_outliers$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 12` > 350,]
+#All playing team sports - they appear to be at competition weekends or camps, exclude because although they may be typical weekends it is reasonable to think that the participants were resting/waiting for long periods during their MVPA; therefore, these numbers are probably not accurate in terms of movement
+hist(wide_d12_outliers$`Unstructured Leisure Time Light-Intensity Physical Activity at 12`)
+wide_d12_outliers[wide_d12_outliers$`Unstructured Leisure Time Light-Intensity Physical Activity at 12` >= 660,]
+#Looks OK
+wide_d12_outliers[wide_d12_outliers$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 12` > 350,]
+#Aligned with structured MVPA
+hist(wide_d12_outliers$`Work and Household Light-Intensity Physical Activity at 12`)
+wide_d12_outliers[wide_d12_outliers$`Work and Household Light-Intensity Physical Activity at 12`> 800,]
+#Diary entry seems incorrect
+hist(wide_d12_outliers$`Nighttime Sleep at 12`)
+wide_d12_outliers[wide_d12_outliers$`Nighttime Sleep at 12` >= 1000,]
+#Could be a typical weekend; no mention of being sick
+wide_d12_outliers[((wide_d12_outliers$`Nighttime Sleep at 12` > 840) & (wide_d12_outliers$`Nighttime Sleep at 12` <= 1000)),]
+#Look like normal days; not mention of being sick
+
+#Remove Wave 7 outliers
+wide_d12_outliers <- wide_d12_outliers[!(wide_d12_outliers$`Active Transportation at 12` >= 300),]
+#Removed 4 Wave 7 TUD
+wide_d12_outliers <- wide_d12_outliers[!(wide_d12_outliers$`Passive Transportation at 12` > 330),]
+#Removed 21 Wave 7 TUD
+wide_d12_outliers <- wide_d12_outliers[!(wide_d12_outliers$`Recreational Screen Time at 12` > 1000),]
+#Removed 1 Wave 7 TUD
+wide_d12_outliers <- wide_d12_outliers[!(wide_d12_outliers$`Self Care Sedentary Behaviour at 12` >= 90),]
+#Removed 20 Wave 7 TUD
+wide_d12_outliers <- wide_d12_outliers[!(wide_d12_outliers$`Social-Based Sedentary Behaviour at 12` > 800),]
+#Removed 1 Wave 7 TUD
+wide_d12_outliers <- wide_d12_outliers[!(wide_d12_outliers$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 12` >= 350),]
+#Removed 6 Wave 7 TUD
+wide_d12_outliers <- wide_d12_outliers[!(wide_d12_outliers$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 12` >= 350),]
+#Removed 10 Wave 7 TUD
+wide_d12_outliers <- wide_d12_outliers[!(wide_d12_outliers$`Work and Household Light-Intensity Physical Activity at 12` > 800),]
+#Removed 1 Wave 7 TUD
+```
+
 
 
 ```{r include=FALSE}
@@ -1164,7 +1281,8 @@ d14_cleaned %>%
     (mainact %in% recreational_screentime & secact1 %in% no_secact) ~ "Recreational Screen Time",
     (mainact %in% selfcare_sb & secact1 %in% no_secact) ~ "Self Care Sedentary Behaviour",
     (mainact %in% social_sb & secact1 %in% no_secact) ~ "Social-Based Sedentary Behaviour",
-    (mainact %in% daytime_naps & secact1 %in% no_secact) ~ "Daytime Naps",
+    (mainact %in% daytime_naps & secact1 %in% no_secact & (total_minutes < 350) | (total_minutes > 512)) ~ "Daytime Naps",
+    (mainact %in% daytime_naps & secact1 %in% no_secact & (total_minutes > 349 & total_minutes < 512)) ~ "Nighttime Sleep 1",
     (mainact %in% uncodeable_activity & secact1 %in% no_secact) ~ "Uncodeable Activity",
     (mainact %in% unstr_lt_pa & secact1 %in% unstr_lt_pa & secact2 %in% no_secact) ~ "Unstructured Leisure Time Light-Intensity Physical Activity",
     (mainact %in% wrk_hh_pa & secact1 %in% wrk_hh_pa & secact2 %in% no_secact) ~ "Work and Household Light-Intensity Physical Activity",
@@ -1427,7 +1545,7 @@ d14_cleaned %>%
 long_d14 %>% 
   dcast(hicid + awake_time_num + sleep_time_num + day + school ~ c(domain_specific_movement_behaviour), value.var="total_minutes", fun.aggregate = sum) -> wide_d14
 
-
+long_d14[long_d14$hicid == 11103490,]
 
 #Calculate Nighttime Sleep 
 #Make variable for subjects who went to sleep before midnight
@@ -1450,13 +1568,16 @@ hist(total_sleep_after_midnight)
 #Convert sleep time into minutes 
 nighttime_sleep <- wide_d14$sleep_time_num / 60
 #Add nighttime sleep into dataset
-wide_d14$"Nighttime Sleep" <- (nighttime_sleep)
+wide_d14$"Nighttime Sleep 2" <- (nighttime_sleep)
+wide_d14$"Nighttime Sleep" <- wide_d14$`Nighttime Sleep 1` + wide_d14$`Nighttime Sleep 2`
+wide_d14 <- wide_d14 %>%  select(-c(`Nighttime Sleep 1`, `Nighttime Sleep 2`))
 
 #Add new columns for general movement behaviours
 wide_d14$"Light-Intensity Physical Activity" <- wide_d14$`Active Transportation` + wide_d14$`Work and Household Light-Intensity Physical Activity` + wide_d14$`Unstructured Leisure Time Light-Intensity Physical Activity`
 wide_d14$"Moderate- to Vigorous- Intensity Physical Activity" <- wide_d14$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity` + wide_d14$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity`
 wide_d14$"Sedentary Behaviour" <- wide_d14$`Leisure Time Sedentary Behaviour` + wide_d14$`Social-Based Sedentary Behaviour` + wide_d14$`Recreational Screen Time` + wide_d14$`Education-Based Sedentary Behaviour` + wide_d14$`Self Care Sedentary Behaviour` + wide_d14$`Passive Transportation`
 wide_d14$"Sleep" <- wide_d14$`Daytime Naps` + wide_d14$`Nighttime Sleep` 
+
 
 #Rename movement behaviour variables to be "at 10" 
 rename(wide_d14, c("Light-Intensity Physical Activity at 14" = "Light-Intensity Physical Activity", "Moderate- to Vigorous- Intensity Physical Activity at 14" = "Moderate- to Vigorous- Intensity Physical Activity", "Sedentary Behaviour at 14" = "Sedentary Behaviour", "Sleep at 14" = "Sleep", "Work and Household Light-Intensity Physical Activity at 14" = "Work and Household Light-Intensity Physical Activity", "Unstructured Leisure Time Light-Intensity Physical Activity at 14" = "Unstructured Leisure Time Light-Intensity Physical Activity", "Active Transportation at 14" = "Active Transportation", "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 14" = "Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 14" = "Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity", "Leisure Time Sedentary Behaviour at 14" = "Leisure Time Sedentary Behaviour", "Social-Based Sedentary Behaviour at 14" = "Social-Based Sedentary Behaviour", "Recreational Screen Time at 14" = "Recreational Screen Time", "Education-Based Sedentary Behaviour at 14" = "Education-Based Sedentary Behaviour", "Self Care Sedentary Behaviour at 14" = "Self Care Sedentary Behaviour", "Daytime Naps at 14" = "Daytime Naps", "Nighttime Sleep at 14" = "Nighttime Sleep", "Passive Transportation at 14" = "Passive Transportation", "Awake Time at 14" ="awake_time_num", "Sleep Time at 14" = "sleep_time_num", "Uncodeable Activity at 14" = "Uncodeable Activity")) -> wide_d14
@@ -1480,6 +1601,81 @@ wide_d14[(wide_d14$school == -9) & !(wide_d14$day == 6 | wide_d14$day == 7),]
 wide_d14$school[wide_d14$school == -9] <- 2
 wide_d14
 ```
+
+```{r}
+wide_d14 -> wide_d14_outliers
+hist(wide_d14_outliers$`Active Transportation at 14`)
+wide_d14_outliers[wide_d14_outliers$`Active Transportation at 14` > 300,]
+#6-hours straight with no breaks; sometimes paired with sedentary behaviour, remove
+wide_d14_outliers[((wide_d14_outliers$`Active Transportation at 14` > 240) & (wide_d14_outliers$`Active Transportation at 14` <= 300)),]
+#300 paired with uncodedable activity (main), 
+hist(wide_d14_outliers$`Daytime Naps at 14`)
+wide_d14_outliers[wide_d14_outliers$`Daytime Naps at 14` > 300,]
+#Exclude >700 min due to abnormal patterns/diaries; 350-511 concert to nighttime sleep
+hist(wide_d14_outliers$`Education-Based Sedentary Behaviour at 14`)
+wide_d14_outliers[wide_d14_outliers$`Education-Based Sedentary Behaviour at 14` > 600,]
+#Education looks OK, longer instances are after school classes, homework, and reading
+hist(wide_d14_outliers$`Leisure Time Sedentary Behaviour at 14`)
+wide_d14_outliers[wide_d14_outliers$`Leisure Time Sedentary Behaviour at 14` > 700,]
+#Exclude >700 because diary incomplete
+wide_d14_outliers[((wide_d14_outliers$`Education-Based Sedentary Behaviour at 14` > 600) & (wide_d14_outliers$`Education-Based Sedentary Behaviour at 14` <= 700)),]
+#Looks OK
+hist(wide_d14_outliers$`Passive Transportation at 14`)
+wide_d14_outliers[wide_d14_outliers$`Passive Transportation at 14` >= 300,]
+#>340 traveling
+hist(wide_d14_outliers$`Recreational Screen Time at 14`)
+wide_d14_outliers[wide_d14_outliers$`Recreational Screen Time at 14` > 1000,]
+#Exclude >1000 because all participants did not go to school that day 
+hist(wide_d14_outliers$`Self Care Sedentary Behaviour at 14`)
+wide_d14_outliers[wide_d14_outliers$`Self Care Sedentary Behaviour at 14` >= 90,]
+hist(wide_d14_outliers$`Social-Based Sedentary Behaviour at 14`)
+wide_d14_outliers[wide_d14_outliers$`Social-Based Sedentary Behaviour at 14` >= 800,]
+#>800 same activity repeated in succession without other activities
+wide_d14_outliers[((wide_d14_outliers$`Social-Based Sedentary Behaviour at 14` > 700) & (wide_d14_outliers$`Social-Based Sedentary Behaviour at 14` <= 800)),]
+#>750 same as >800
+hist(wide_d14_outliers$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 14`)
+wide_d14_outliers[wide_d14_outliers$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 14` > 350,]
+#All playing team sports - they appear to be at competition weekends or camps, exclude because although they may be typical weekends it is reasonable to think that the participants were resting/waiting for long periods during their MVPA; therefore, these numbers are probably not accurate in terms of movement
+hist(wide_d14_outliers$`Unstructured Leisure Time Light-Intensity Physical Activity at 14`)
+wide_d14_outliers[wide_d14_outliers$`Unstructured Leisure Time Light-Intensity Physical Activity at 14` >= 660,]
+#Nobody in this category
+wide_d14_outliers[wide_d14_outliers$`Unstructured Leisure Time Light-Intensity Physical Activity at 14` >= 300,]
+#Plenty of particpants in this category and they look like reasonable days
+wide_d14_outliers[wide_d14_outliers$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 14` > 350,]
+#Aligned with structured MVPA
+hist(wide_d14_outliers$`Work and Household Light-Intensity Physical Activity at 14`)
+wide_d14_outliers[wide_d14_outliers$`Work and Household Light-Intensity Physical Activity at 14`> 800,]
+#Nobody in this category
+wide_d14_outliers[wide_d14_outliers$`Work and Household Light-Intensity Physical Activity at 14`> 400,]
+#Reasonable looking
+hist(wide_d14_outliers$`Nighttime Sleep at 14`)
+wide_d14_outliers[wide_d14_outliers$`Nighttime Sleep at 14` >= 1000,]
+#Didn't go to school
+
+
+#Remove Wave 8 outliers
+wide_d14_outliers <- wide_d14_outliers[!(wide_d14_outliers$`Active Transportation at 14` >= 300),]
+#Removed 2 Wave 8 TUD
+wide_d14_outliers <- wide_d14_outliers[!(wide_d14_outliers$`Daytime Naps at 14` >= 700),]
+#Removed 1 Wave 8 TUD
+wide_d14_outliers <- wide_d14_outliers[!(wide_d14_outliers$`Leisure Time Sedentary Behaviour at 14` >= 700),]
+#Removed 1 Wave 8 TUD
+wide_d14_outliers <- wide_d14_outliers[!(wide_d14_outliers$`Passive Transportation at 14` > 340),]
+#Removed 25 Wave 8 TUD
+wide_d14_outliers <- wide_d14_outliers[!(wide_d14_outliers$`Recreational Screen Time at 14` > 1000),]
+#Removed 4 Wave 8 TUD
+wide_d14_outliers <- wide_d14_outliers[!(wide_d14_outliers$`Self Care Sedentary Behaviour at 14` >= 90),]
+#Removed 36 Wave 8 TUD
+wide_d14_outliers <- wide_d14_outliers[!(wide_d14_outliers$`Social-Based Sedentary Behaviour at 14` > 750),]
+#Removed 3 Wave 8 TUD
+wide_d14_outliers <- wide_d14_outliers[!(wide_d14_outliers$`Structured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 14` >= 350),]
+#Removed 9 Wave 8 TUD
+wide_d14_outliers <- wide_d14_outliers[!(wide_d14_outliers$`Unstructured Leisure Time Moderate- to Vigorous- Intensity Physical Activity at 14` >= 350),]
+#Removed 3 Wave 8 TUD
+wide_d14_outliers <- wide_d14_outliers[!(wide_d14_outliers$`Nighttime Sleep at 14` > 1000),]
+#Removed 1 Wave 8 TUD
+```
+
 
 ```{r include=FALSE}
 #Impute missing subject characteristics data 
@@ -1552,17 +1748,82 @@ names(TUD_standardize) <- gsub("_at_", "_scaled_", names(TUD_standardize))
 #Add scaled data to original data 
 TUD_and_normalized_data <- cbind(completed_merged_TUD, TUD_standardize)
 TUD_and_normalized_data[nrow(sapply(TUD_and_normalized_data, max)) + 1, ] -> normalized_TUD_min_and_max
-options(scipen = 999)
-as.data.frame(sapply(TUD_and_normalized_data, min)) -> min_values
-min_values <- t(min_values)
-TUD_and_normalized_data <- rbind(TUD_and_normalized_data, min_values)
-as.data.frame(sapply(TUD_and_normalized_data, max)) -> max_values
-max_values <- t(max_values)
-TUD_and_normalized_data <- rbind(TUD_and_normalized_data, max_values)
-tail(TUD_and_normalized_data)
-row.names(TUD_and_normalized_data)[row.names(TUD_and_normalized_data) == "sapply(TUD_and_normalized_data, min)"] <- "Minimum"
-row.names(TUD_and_normalized_data)[row.names(TUD_and_normalized_data) == "sapply(TUD_and_normalized_data, max)"] <- "Maximum"
+
 ```
+
+```{r}
+#Impute missing subject characteristics data 
+#Look for missing participant data for SEP
+relevant_lsacgrb10[is.na(relevant_lsacgrb10$SEP),]
+#Do not include these participants in analysis since we do not want to impute SEP since it is a key predictor of the research question; additionally participants missing SEP data is < 5% (57/3,764)
+#To do this, first combine with TUD dataset
+#Combine the 3 time-use diaries 
+merge(clean_names(wide_d10_outliers), clean_names(wide_d12_outliers), by ="hicid", all = T) -> completed_wide_d10_d12_removed_outliers
+merged_TUD_removed_outliers <- merge(completed_wide_d10_d12_removed_outliers, clean_names(wide_d14_outliers), by = "hicid", all =T)
+merged_TUD_removed_outliers <- merge(merged_TUD_removed_outliers, relevant_lsacgrb10, by = "hicid", all =T)
+merged_TUD_removed_outliers[is.na(merged_TUD_removed_outliers$SEP), ]
+
+
+#Some participants didn't have TUD data at Wave 6, since this is our baseline, they will not be included in the analysis 
+merged_TUD_removed_outliers[is.na(merged_TUD_removed_outliers$awake_time_at_10), ]
+
+merged_TUD_removed_outliers <- merged_TUD_removed_outliers[!is.na(merged_TUD_removed_outliers$awake_time_at_10),]
+merged_TUD_removed_outliers <- merged_TUD_removed_outliers[!is.na(merged_TUD_removed_outliers$SEP),]
+#find out how many participants were missing TUD at Wave 7 and 8 
+merged_TUD_removed_outliers[is.na(merged_TUD_removed_outliers$awake_time_at_12), ]
+#632 participants missing Wave 7 TUD
+merged_TUD_removed_outliers[is.na(merged_TUD_removed_outliers$awake_time_at_14), ]
+#902 participants missing Wave 8 TUD
+#Now, see how many participants are missing both TUD
+merged_TUD_removed_outliers[is.na(merged_TUD_removed_outliers$awake_time_at_12) & is.na(merged_TUD_removed_outliers$awake_time_at_14), ]
+#432 participants missing TUD at Wave 7 and 8 
+#Turn -9 into NA so it can be coded by Taren later
+relevant_lsacgrb10$Remoteness[relevant_lsacgrb10$Remoteness == -9] <- NA
+
+merged_TUD_removed_outliers$day.x <- as.numeric(merged_TUD_removed_outliers$day.x)
+merged_TUD_removed_outliers$day <- as.numeric(merged_TUD_removed_outliers$day)
+merged_TUD_removed_outliers$day.y <- as.numeric(merged_TUD_removed_outliers$day.y)
+merged_TUD_removed_outliers$Sex <- as.numeric(merged_TUD_removed_outliers$Sex)
+merged_TUD_removed_outliers$Indigenous <- as.numeric(merged_TUD_removed_outliers$Indigenous)
+merged_TUD_removed_outliers$Remoteness <- as.numeric(merged_TUD_removed_outliers$Remoteness)
+merged_TUD_removed_outliers$school.x <- as.numeric(merged_TUD_removed_outliers$school.x)
+merged_TUD_removed_outliers$school <- as.numeric(merged_TUD_removed_outliers$school)
+merged_TUD_removed_outliers$school.y <- as.numeric(merged_TUD_removed_outliers$school.y)
+str(merged_TUD_removed_outliers)
+ 
+#Impute missing data using mice; excluded participant ID, awake time, sleep time, and total movement behaviours from model  
+ini <- mice(merged_TUD_removed_outliers, maxit=0)
+pred <- ini$pred
+pred[, c("hicid", "awake_time_at_10", "awake_time_at_12", "awake_time_at_14", "sleep_time_at_10", "sleep_time_at_12", "sleep_time_at_14", "total_general_movement_behaviours", "total_general_movement_behaviours.x", "total_general_movement_behaviours.y", "total_domain_specific_movement_behaviours", "total_domain_specific_movement_behaviours.x", "total_domain_specific_movement_behaviours.y", "school", "school.x", "school.y")] <- 0
+meth <- ini$meth
+meth["Sex"] <- "logreg"
+meth["Indigenous"] <- "logreg"
+meth["Remoteness"] <- "polr"
+meth["day"] <- "polr" 
+meth["day.x"] <- "polr"
+meth["day.y"] <- "polr"
+meth
+mice(merged_TUD_removed_outliers, method = "cart", pred=pred) -> imputed_removed_outliers
+#Save imputed dataset
+completed_TUD_removed_outliers <- complete(imputed_removed_outliers, 1)
+colnames(completed_TUD_removed_outliers)[colnames(completed_TUD_removed_outliers) == "day.x"] <- "day_of_week_at_10"
+colnames(completed_TUD_removed_outliers)[colnames(completed_TUD_removed_outliers) == "day.y"] <- "day_of_week_at_12"
+colnames(completed_TUD_removed_outliers)[colnames(completed_TUD_removed_outliers) == "day"] <- "day_of_week_at_14"
+colnames(completed_TUD_removed_outliers)[colnames(completed_TUD_removed_outliers) == "school.x"] <- "school_attendance_at_10"
+colnames(completed_TUD_removed_outliers)[colnames(completed_TUD_removed_outliers) == "school.y"] <- "school_attendance_at_12"
+colnames(completed_TUD_removed_outliers)[colnames(completed_TUD_removed_outliers) == "school"] <- "school_attendance_at_14"
+completed_TUD_removed_outliers$day_of_week_at_10[!((completed_TUD_removed_outliers$day_of_week_at_10 == 6) | (completed_TUD_removed_outliers$day_of_week_at_10 == 7))] <- 1
+completed_TUD_removed_outliers$day_of_week_at_10[(completed_TUD_removed_outliers$day_of_week_at_10 == 6) | (completed_TUD_removed_outliers$day_of_week_at_10 == 7)] <- 2
+#Normalize data; first select relevant columns 
+completed_TUD_removed_outliers %>% 
+  select(6:14, 16:23, 30:38, 40:47, 54:62, 64:73) -> TUD_for_scaling_outliers
+TUD_standardize_no_outliers <- as.data.frame(scale(TUD_for_scaling_outliers))
+names(TUD_standardize_no_outliers) <- gsub("_at_", "_scaled_", names(TUD_standardize_no_outliers))
+#Add scaled data to original data 
+TUD_and_removed_outliers_normalized <- cbind(completed_TUD_removed_outliers, TUD_standardize_no_outliers)
+
+```
+
 
 ```{r eval=FALSE, include=FALSE}
 TUD_and_normalized_data %>% 
@@ -1580,7 +1841,24 @@ save(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours, file ='Z:/LS
 
 foreign::write.dta(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours, "Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours.dta")
 save(Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours, file = 'Z:/LSAC dataset/Study_2/Study_2/Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours.dta')
+
 ```
+
+```{r}
+TUD_and_removed_outliers_normalized %>% 
+  select(1, 4:14, 16:23, 28:38, 40:47, 52:62, 64:71, 74:129) -> No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours
+colnames(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours)[colnames(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours) == "education_based_sedentary_behaviour_at_10"] <- "education_SB_at_10"
+names(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours) <- gsub("sedentary_behaviour", "SB", names(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours))
+names(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours) <- gsub("moderate_to_vigorous_intensity_physical_activity", "MVPA", names(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours))
+names(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours) <- gsub("light_intensity_physical_activity", "LPA", names(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours))
+names(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours) <- gsub("_leisure_time_", "_", names(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours))
+names(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours) <- gsub("transportation", "transport", names(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours))
+names(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours) <- gsub("recreational_", "", names(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours))
+names(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours) <- gsub("work_and_", "", names(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours))
+write_dta(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours, "No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours.dta")
+save(No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours, file ='Z:/LSAC dataset/Study_2/Study_2/No_outliers_Multi_Trajecotry_Analysis_Domain_Specific_Movement_Behaviours.RData')
+```
+
 
 
 ```{r echo=FALSE}
@@ -1814,6 +2092,53 @@ knitr::include_graphics("Figure1SubjectFlowChart.jpg")
 ```
 
 ```{r}
+install.packages("devtools")  ## do not run if package 'devtools' is already installed
+library(devtools)
+install_github("alessandromagrini/gbmt")
+
+data(agrisus2)
+??agrisus2          ## data description
+summary(agrisus2)  ## data summaries
+
+varNames <- c("TFP_2005_CAP","NetCapital_GVA","Manager_ratio",
+  "FactorIncome_paid_2010","EntrIncome_unpaid_2010",
+  "Income_rur","Unempl_rur","Poverty_rur",
+  "RenewProd","Organic_p","GHG_UAA","GNB_UAA")
+
+m4_3 <- gbmt(x.names=varNames, unit="Country", time="Year", d=3, ng=4 ,data=agrisus2)
+
+m4_3$assign.list
+
+m4_3$fitted
+
+plot(m4_3, group=1)  ## group 1
+plot(m4_3, group=2)  ## group 2
+plot(m4_3, group=3)  ## group 3
+plot(m4_3, group=4)  ## group 4
+
+predict(m4_3, n.ahead=3)  ## 3-step ahead
+
+m4_3r <- gbmt(x.names=varNames, unit="Country", time="Year", d=3, ng=4, data=agrisus2, nstart=100)
+
+ng <- 1:6
+modList <- vector("list", length=length(ng))
+names(modList) <- ng
+for(i in 1:length(ng)) {
+  set.seed(123)  ## seed for reproducibility
+  modList[[i]] <- gbmt(x.names=varNames, unit="Country", time="Year", d=3, ng=ng[i],
+                      data=agrisus2, nstart=100)
+  }
+do.call(rbind, lapply(modList, function(x){x$ic}))
+
+ng <- 1:6
+modListFull <- vector("list", length=length(ng))
+names(modListFull) <- ng
+for(i in 1:length(ng)) {
+  set.seed(123)  ## seed for reproducibility
+  modListFull[[i]] <- gbmt(x.names=varNames, unit="Country", time="Year", d=3, ng=ng[i],
+                           data=agrisus, tol=1e-4, maxit=5000, nstart=100)
+  }
+do.call(rbind, lapply(modListFull, function(x){x$ic}))
 
 ```
 

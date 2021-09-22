@@ -32,7 +32,7 @@ get_metrics <- function(df, variables){
     set.seed(42)
     res <- gbmt::gbmt(x.names=variables, unit="hicid", time="time", 
                 d=d, ng=ng, 
-                data=df, maxit = 2)
+                data=df)
     res
   }
   

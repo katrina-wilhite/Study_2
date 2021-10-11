@@ -15,9 +15,9 @@ library(haven)
 
 df <- haven::read_dta("Z:\\LSAC dataset\\Study_2\\Study_2\\No_outliers_Multi_Trajectory_Analysis_Domain_Specific_Movement_Behaviours.dta")
 
-df_weekend_gen <- df[df$day_of_week_at_10 ==2,]
+df_gen_weekend <- df[df$day_of_week_at_10 ==2,]
 
-df_long <- df_weekend_gen %>%
+df_long <- df_gen_weekend %>%
   distinct(hicid, .keep_all = TRUE) %>%
   pivot_longer(
     cols = ends_with(c("10", "12", "14")),
@@ -52,7 +52,11 @@ get_metrics <- function(df, variables){
 }
 
 # Run the function
-results <- get_metrics(df_long_reduced, variables)
+results_df_gen_weekend <- get_metrics(df_long_reduced, variables)
+
+#Save results 
+foreign::write_dta(results_df_gen_weekend, "df_gen_weekend.RData")
+save(results_df_gen_weekend, file ='Z:/LSAC dataset/Study_2/Study_2/df_gen_weekend.Rdata')
 
 # Put the results in a table
 do.call(rbind, lapply(results, function(x){

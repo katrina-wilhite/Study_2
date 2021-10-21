@@ -1,0 +1,87 @@
+```{r}
+#Open relevant packages 
+library(foreign)
+library(nnet)
+library(ggplot2)
+library(reshape2)
+
+```
+
+```{r}
+#Run logisitic regression test 
+load("df_gen_weekday.Rdata")
+#Make trajectory assignemnt as a factor since it's categorical 
+str(df_weekday)
+df_weekday$model2_trajectory_assignments = as.factor(df_weekday$model2_trajectory_assignments)
+#Split data into training and testing data 
+set.seed(1234)
+df_weekday1 <-sample(2, nrow(df_weekday), 
+                   replace = T, 
+                 prob = c(0.6, 0.4))
+train<-df_weekday[df_weekday1 == 1,]
+test<-df_weekday[df_weekday1 == 2,]
+
+```
+
+```{r}
+#Find descriptive statistics of SEP per trajectory assignment 
+with(df_weekday, do.call(rbind, tapply(SEP, model2_trajectory_assignments, function(x) c(M = mean(x), SD = sd(x)))))
+``` 
+
+```{r}
+#Choose a reference group and then run model with multinom function 
+train$model2_trajectory_assignments <- relevel(train$model2_trajectory_assignments, ref = "1")
+multinom.fit <- multinom(model2_trajectory_assignments ~ SEP, data = train)
+##Question: If I want to use remoteness, sex, and indigenous status as controls, how do I do that? Do I just use this equation: multinom.fit <- multinom(model2_trajectory_assignments ~ SEP + Age + Remotenss + Indigenous Status, data = train)
+```
+
+```{r}
+#Use the summary function to view coefficients and standard errors
+summary(multinom.fit)
+#Results: A one unit increase in SEP is associated with a -.148 decrease in odds of being in trajectory 2 compared to trajectory 1
+#A one unit increase in SEP is associated with a .0556 increase in odds of being in trajectory 3 compared to trajectory 1
+```
+```{r}
+#See if the test is significant
+z <- summary(multinom.fit)$coefficients/summary(multinom.fit)$standard.errors
+# 2-tailed Wald z tests to test significance of coefficients
+p <- (1 - pnorm(abs(z), 0, 1)) * 2
+p
+#Results: Sure isn't!
+```
+
+
+```{r}
+#extract coefficient and exponeitiate to find the odds ratio 
+exp(coef(multinom.fit))
+#Results: The odds ratio of a one-unit increase in SEP is .86 for being in trajectory 2 vs. trajectory 3
+#The odds ratio of a one-unit increase in SEP is 1.05 for being in trajectory 3 vs. trajectory 1. 
+```
+```{r}
+#Find the confidence intervals for the odds ratios 
+exp(confint(multinom.fit))
+```
+
+
+```{r}
+head(probability.table <- fitted(multinom.fit))
+#Results: Subject 1 has a 33.38% probability of being in trajectory 1, a 12.77% probability of being in trajectory 2, and a 53.58% probability of being in trajectory 3. 
+```
+
+
+```{r}
+#Test to see how accurate the training data is 
+train$predicted <- predict(multinom.fit, newdata = train)
+ctable <- table(train$model2_trajectory_assignments, train$predicted)
+round((sum(diag(ctable))/sum(ctable))*100,2)
+#The model correctly predicts 56.3% of participants in the their correct trajectories based on their SEP 
+```
+```{r}
+#Validate the model with the test data; compare the results with the training data 
+test$predicted <- predict(multinom.fit, newdata = test)
+ctable <- table(test$model2_trajectory_assignments, test$predicted)
+round((sum(diag(ctable))/sum(ctable))*100,2)
+#The test model correctly predicts 53.26% of the participants to their correct trajectories based on their SEP; this model has a 3.04% difference from the training model and is therefore a good fit.... I think? What's the threshold for being an acceptable fit? 
+```
+
+

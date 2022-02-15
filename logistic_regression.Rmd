@@ -1,87 +1,165 @@
-```{r}
+```{r include=FALSE}
 #Open relevant packages 
 library(foreign)
 library(nnet)
 library(ggplot2)
 library(reshape2)
-
+library(kableExtra)
+library(tools)
+library(dplyr)
 ```
 
-```{r}
+```{r include=FALSE}
 #Run logisitic regression test 
 load("df_gen_weekday.Rdata")
 #Make trajectory assignemnt as a factor since it's categorical 
 str(df_weekday)
 df_weekday$model2_trajectory_assignments = as.factor(df_weekday$model2_trajectory_assignments)
-#Split data into training and testing data 
-set.seed(1234)
-df_weekday1 <-sample(2, nrow(df_weekday), 
-                   replace = T, 
-                 prob = c(0.6, 0.4))
-train<-df_weekday[df_weekday1 == 1,]
-test<-df_weekday[df_weekday1 == 2,]
-
+#hist(df_weekday$SEP)
 ```
 
-```{r}
+```{r include=FALSE}
 #Find descriptive statistics of SEP per trajectory assignment 
 with(df_weekday, do.call(rbind, tapply(SEP, model2_trajectory_assignments, function(x) c(M = mean(x), SD = sd(x)))))
+#Find descriptive statistics of Sex per trajectory assignment 
+with(df_weekday, table(Sex, model2_trajectory_assignments))
+#Find descriptive statistics of Remotness per trajectory assignment 
+with(df_weekday, table(Remoteness, model2_trajectory_assignments))
+#Find descriptive statistics of Indigenous status per trajectory assignment  
+with(df_weekday, table(Indigenous, model2_trajectory_assignments))
 ``` 
 
-```{r}
-#Choose a reference group and then run model with multinom function 
-train$model2_trajectory_assignments <- relevel(train$model2_trajectory_assignments, ref = "1")
-multinom.fit <- multinom(model2_trajectory_assignments ~ SEP, data = train)
-##Question: If I want to use remoteness, sex, and indigenous status as controls, how do I do that? Do I just use this equation: multinom.fit <- multinom(model2_trajectory_assignments ~ SEP + Age + Remotenss + Indigenous Status, data = train)
+```{r include=FALSE}
+test <- multinom(model2_trajectory_assignments ~ SEP, data = df_weekday)
+```
+```{r include=FALSE}
+z <- summary(test)$coefficients/summary(test)$standard.errors
+z
+```
+```{r include=FALSE}
+p <- (1 - pnorm(abs(z), 0, 1)) * 2
+p
+p -> p_unadjusted_g
+as.data.frame(p_unadjusted_g) -> p_unadjusted_g
+p_unadjusted_g <- p_unadjusted_g %>% select(-"(Intercept)")
+colnames(p_unadjusted_g) <- "p_unadjust"
+p_unadjusted_g$p_unadjust_rounded <- round(p_unadjusted_g$p_unadjust, digits = 2)
+p_unadjusted_g <- p_unadjusted_g %>%  select(-"p_unadjust")
 ```
 
-```{r}
+```{r include=FALSE}
+exp(coef(test))-> OR_unadjusted
+as.data.frame(OR_unadjusted) -> OR_unadjusted
+OR_unadjusted <- OR_unadjusted %>%  select(-"(Intercept)")
+```
+
+```{r include=FALSE}
+exp(confint(test)) -> CI_unadjusted
+as.data.frame(CI_unadjusted) -> CI_unadjusted
+CI_unadjusted <- CI_unadjusted[-c(1),]
+CI_unadjusted[,1:2] -> traj_2
+CI_unadjusted[,3:4] -> traj_3
+colnames(traj_2) <- c('LCI', 'HCI')
+colnames(traj_3) <- c('LCI', 'HCI')
+rbind(traj_2, traj_3) -> CI_unadjusted
+```
+
+
+
+```{r include=FALSE}
+do.call("cbind", list(OR_unadjusted,CI_unadjusted, p_unadjusted_g)) -> OR_CI_unadjusted
+
+OR_CI_unadjusted$trajectory <- c("Group 2", "Group 3")
+str(OR_CI_unadjusted)
+OR_CI_unadjusted$SEP_rounded <- round(OR_CI_unadjusted$SEP, digits = 2)
+OR_CI_unadjusted$LCI_rounded <- round(OR_CI_unadjusted$LCI, digits = 2)
+OR_CI_unadjusted$HCI_rounded <- round(OR_CI_unadjusted$HCI, digits = 2)
+OR_CI_unadjusted$unadjusted_OR <- paste(OR_CI_unadjusted$SEP_rounded, " ", "(", OR_CI_unadjusted$LCI_rounded, "-", OR_CI_unadjusted$HCI_rounded, ")")
+reference_row <- c("", "", "", "", "Group 1", "", "", "", "Reference", "Reference")
+rbind(reference_row, OR_CI_unadjusted) -> OR_CI_unadjusted
+OR_CI_unadjusted %>% select(trajectory, unadjusted_OR, p_unadjust_rounded) -> unadjusted_reduced
+```
+
+```{R include=FALSE}
+#Write adjusted code 
+test2 <- multinom(model2_trajectory_assignments ~ SEP  + Remoteness + Indigenous, data = df_weekday)
+```
+
+```{r include=FALSE}
 #Use the summary function to view coefficients and standard errors
-summary(multinom.fit)
+summary(test2)
 #Results: A one unit increase in SEP is associated with a -.148 decrease in odds of being in trajectory 2 compared to trajectory 1
 #A one unit increase in SEP is associated with a .0556 increase in odds of being in trajectory 3 compared to trajectory 1
 ```
-```{r}
+
+```{r include=FALSE}
 #See if the test is significant
-z <- summary(multinom.fit)$coefficients/summary(multinom.fit)$standard.errors
+z <- summary(test2)$coefficients/summary(test2)$standard.errors
 # 2-tailed Wald z tests to test significance of coefficients
 p <- (1 - pnorm(abs(z), 0, 1)) * 2
-p
-#Results: Sure isn't!
+p -> p_adjusted_g
+#Results: definitely not significant 
+#Results: definitely not significant 
+as.data.frame(p) -> p_adjusted_g
+p_adjusted_g <- p_adjusted_g %>%  select(-c("(Intercept)", "Remoteness", "Indigenous"))
+colnames(p_adjusted_g) <- "p_adjust"
+p_adjusted_g$p_adjust_rounded <- round(p_adjusted_g$p_adjust, digits = 2)
+p_adjusted_g <- p_adjusted_g %>%  select(-"p_adjust")
+#Results: definitely not significant 
 ```
 
 
-```{r}
-#extract coefficient and exponeitiate to find the odds ratio 
-exp(coef(multinom.fit))
+```{r include=FALSE}
+#extract coefficient and exponentiation to find the odds ratio 
+exp(coef(test2)) -> adjusted_OR
+as.data.frame(adjusted_OR) -> adjusted_OR
+adjusted_OR <- adjusted_OR %>%  select(-c("(Intercept)", "Remoteness", "Indigenous"))
 #Results: The odds ratio of a one-unit increase in SEP is .86 for being in trajectory 2 vs. trajectory 3
 #The odds ratio of a one-unit increase in SEP is 1.05 for being in trajectory 3 vs. trajectory 1. 
 ```
-```{r}
+
+```{r include=FALSE}
 #Find the confidence intervals for the odds ratios 
-exp(confint(multinom.fit))
+exp(confint(test2)) -> adjusted_CI
+as.data.frame(adjusted_CI) -> adjusted_CI
+adjusted_CI <- adjusted_CI[-c(1,3:4),]
+adjusted_CI[,1:2] -> traj_2
+adjusted_CI[,3:4] -> traj_3
+colnames(traj_2) <- c('LCI', 'HCI')
+colnames(traj_3) <- c('LCI', 'HCI')
+rbind(traj_2, traj_3) -> adjusted_CI
+```
+
+```{r include=FALSE}
+do.call("cbind", list(adjusted_OR,adjusted_CI, p_adjusted_g)) -> OR_adjusted_CI
+
+OR_adjusted_CI$trajectory <- c("Group 2", "Group 3")
+str(OR_adjusted_CI)
+OR_adjusted_CI$SEP_rounded <- round(OR_adjusted_CI$SEP, digits = 2)
+OR_adjusted_CI$LCI_rounded <- round(OR_adjusted_CI$LCI, digits = 2)
+OR_adjusted_CI$HCI_rounded <- round(OR_adjusted_CI$HCI, digits = 2)
+OR_adjusted_CI$adjusted_OR <- paste(OR_adjusted_CI$SEP_rounded, " ", "(", OR_adjusted_CI$LCI_rounded, "-", OR_adjusted_CI$HCI_rounded, ")")
+reference_row <- c("", "", "", "", "Group 1", "", "", "", "Reference", "Reference")
+rbind(reference_row, OR_adjusted_CI) -> OR_adjusted_CI
+OR_adjusted_CI %>% select(trajectory, adjusted_OR, p_adjust_rounded) -> adjusted_reduced
+```
+
+```{r echo=FALSE}
+#Combine Unadjusted and Adjusted results 
+cbind(unadjusted_reduced, adjusted_reduced)->odds_ratios_gen
+#Make a table with the results 
+odds_ratios_gen <- odds_ratios_gen %>% 
+  select(-(4))
+names(odds_ratios_gen) <- gsub("_", " ", names(odds_ratios_gen)) 
+colnames(odds_ratios_gen) <- c("Group", "Unadjusted OR", "p", "Adjusted OR", "p")
+odds_ratios_gen %>% 
+  kbl(caption = "Table 2. Odds Ratios of General Movement Behaviour Trajectory Membership by Socioeconomic Position") %>% 
+  kable_classic() %>% 
+  kable_styling(font_size = 14, full_width = F, position = "center") %>% 
+  row_spec(0, bold =T) %>% 
+  footnote(general = "Values are expressed as odds ratios and 95% confidence intervals. Trajectories were adjusted for sex, remoteness, and Indigenous status.")
 ```
 
 
-```{r}
-head(probability.table <- fitted(multinom.fit))
-#Results: Subject 1 has a 33.38% probability of being in trajectory 1, a 12.77% probability of being in trajectory 2, and a 53.58% probability of being in trajectory 3. 
-```
-
-
-```{r}
-#Test to see how accurate the training data is 
-train$predicted <- predict(multinom.fit, newdata = train)
-ctable <- table(train$model2_trajectory_assignments, train$predicted)
-round((sum(diag(ctable))/sum(ctable))*100,2)
-#The model correctly predicts 56.3% of participants in the their correct trajectories based on their SEP 
-```
-```{r}
-#Validate the model with the test data; compare the results with the training data 
-test$predicted <- predict(multinom.fit, newdata = test)
-ctable <- table(test$model2_trajectory_assignments, test$predicted)
-round((sum(diag(ctable))/sum(ctable))*100,2)
-#The test model correctly predicts 53.26% of the participants to their correct trajectories based on their SEP; this model has a 3.04% difference from the training model and is therefore a good fit.... I think? What's the threshold for being an acceptable fit? 
-```
 
 

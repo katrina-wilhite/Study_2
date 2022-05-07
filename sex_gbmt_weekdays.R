@@ -89,7 +89,7 @@ results_male_gen_weekday <- get_metrics(df_long_reduced, variables)
 stopCluster(cl)
 
 # Save results
-save(results_gen_weekday, file = 'results_male_gen_weekday.Rdata')
+save(results_male_gen_weekday, file = 'results_male_gen_weekday.Rdata')
 
 do.call(rbind, lapply(results_male_gen_weekday, function(x) {
   y <- x$ic
@@ -227,7 +227,7 @@ results_female_gen_weekday <- get_metrics(df_long_reduced, variables)
 stopCluster(cl)
 
 # Save results
-save(results_gen_weekday, file = 'results_female_gen_weekday.Rdata')
+save(results_female_gen_weekday, file = 'results_female_gen_weekday.Rdata')
 
 do.call(rbind, lapply(results_female_gen_weekday, function(x) {
   y <- x$ic

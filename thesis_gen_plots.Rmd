@@ -1,0 +1,684 @@
+---
+title: "thesis_plots_general"
+output: html_document
+date: '2022-10-09'
+---
+
+```{r setup, cache=FALSE, include=FALSE}
+library(knitr)
+library(Cairo)
+opts_chunk$set(dev = "png", dev.args = list(type = "cairo"), dpi = 96)
+
+output <- opts_knit$get("rmarkdown.pandoc.to")
+#if (output=="html") opts_chunk$set(fig.width=15, fig.height=11)
+```
+
+
+```{r include=FALSE}
+library("ggplot2")
+library("Rmisc")
+library("cowplot")
+library("dplyr")
+library("gridExtra")
+library("dplyr")
+library("ggplot2")
+```
+
+```{r include=FALSE}
+#Load best fit dataset 
+load(file = "C:/Users/katri/Documents/ACU/Study_2/Study_2/df_males_gen_weekday.Rdata")
+#Print dataset
+df_males_gen_weekday
+
+#Load best fit dataset 
+load(file = "C:/Users/katri/Documents/ACU/Study_2/Study_2/df_females_gen_weekday.Rdata")
+#Print dataset
+df_females_gen_weekday
+```
+
+```{r include=FALSE}
+#Make trajectories for model 2 males 
+load("C:/Users/katri/Documents/ACU/Study_2/Study_2/results_male_gen_weekday.Rdata")
+results_male_gen_weekday
+
+
+#Add column for Model 2 trajectories 
+results_male_gen_weekday[[2]]$assign.list$`1`-> traj_1_model2
+results_male_gen_weekday[[2]]$assign.list$`2`-> traj_2_model2
+results_male_gen_weekday[[2]]$assign.list$`3`-> traj_3_model2
+
+
+
+as.data.frame(traj_1_model2)-> traj_1_df_model2
+as.data.frame(traj_2_model2)-> traj_2_df_model2
+as.data.frame(traj_3_model2)-> traj_3_df_model2
+
+
+
+traj_1_df_model2 <-
+  traj_1_df_model2 %>% 
+  mutate(trajectory = 1)
+traj_2_df_model2 <-
+  traj_2_df_model2 %>% 
+  mutate(trajectory = 2)
+traj_3_df_model2 <-
+  traj_3_df_model2 %>% 
+  mutate(trajectory = 3)
+
+
+dplyr::rename(traj_1_df_model2, hicid = traj_1_model2) -> traj_1_df_model2
+dplyr::rename(traj_2_df_model2, hicid = traj_2_model2) -> traj_2_df_model2
+dplyr::rename(traj_3_df_model2, hicid = traj_3_model2) -> traj_3_df_model2
+
+
+
+do.call("rbind", list(traj_1_df_model2, traj_2_df_model2, traj_3_df_model2)) -> gen_males_model2
+arrange(gen_males_model2, hicid) -> gen_males_model2
+df_males_gen_weekday$model2_trajectory_assignments <- gen_males_model2$trajectory
+df_males_gen_weekday[,"model2_trajectory_assignments"]
+save(df_males_gen_weekday, file = 'C:/Users/katri/Documents/ACU/Study_2/Study_2/Study_2/df_males_gen_weekday.RData')
+
+#Define age for x axis 
+age <- c("10", "12", "14")
+#Assign each MB for each trajectory to a variable; start with each MB because order matters when entering the individual plots into the multiplot 
+
+#Name variables for LPA and create vectors for each plot 
+
+
+```
+
+```{r include=FALSE}
+#Make dataframe for each Trajectory from the best fit model 
+trajectory_1_2 <- df_males_gen_weekday[(df_males_gen_weekday$model2_trajectory_assignments == 1),]
+trajectory_2_2 <- df_males_gen_weekday[(df_males_gen_weekday$model2_trajectory_assignments == 2),]
+trajectory_3_2 <- df_males_gen_weekday[(df_males_gen_weekday$model2_trajectory_assignments == 3),]
+
+#Define age for x axis 
+age <- c("10", "12", "14")
+#Assign each MB for each trajectory to a variable; start with each MB because order matters when entering the individual plots into the multiplot 
+
+#Name variables for LPA and create vectors for each plot 
+round(mean(trajectory_1_2$LPA_at_10), digits = 0) -> traj_1_10_LPA
+round(mean(trajectory_1_2$LPA_at_12), digits = 0) -> traj_1_12_LPA 
+round(mean(trajectory_1_2$LPA_at_14), digits = 0) -> traj_1_14_LPA
+trajectory_1_2_LPA <- c(traj_1_10_LPA, traj_1_12_LPA, traj_1_14_LPA)
+LPA_plot_1 <- data.frame(age, trajectory_1_2_LPA)
+LPA_plot_1[] <- lapply(LPA_plot_1, as.numeric)
+
+round(mean(trajectory_2_2$LPA_at_10), digits = 0) -> traj_2_10_LPA
+round(mean(trajectory_2_2$LPA_at_12), digits = 0) -> traj_2_12_LPA
+round(mean(trajectory_2_2$LPA_at_14), digits = 0) -> traj_2_14_LPA
+trajectory_2_2_LPA <- c(traj_2_10_LPA, traj_2_12_LPA, traj_2_14_LPA)
+LPA_plot_2 <- data.frame(age, trajectory_2_2_LPA)
+LPA_plot_2[] <- lapply(LPA_plot_2, as.numeric)
+
+round(mean(trajectory_3_2$LPA_at_10), digits = 0) -> traj_3_10_LPA
+round(mean(trajectory_3_2$LPA_at_12), digits = 0) -> traj_3_12_LPA 
+round(mean(trajectory_3_2$LPA_at_14), digits = 0) -> traj_3_14_LPA
+trajectory_3_2_LPA <- c(traj_3_10_LPA, traj_3_12_LPA, traj_3_14_LPA)
+LPA_plot_3 <- data.frame(age, trajectory_3_2_LPA)
+LPA_plot_3[] <- lapply(LPA_plot_3, as.numeric)
+
+#Name variables for MVPA
+round(mean(trajectory_1_2$MVPA_at_10), digits = 0) -> traj_1_10_MVPA
+round(mean(trajectory_1_2$MVPA_at_12), digits = 0) -> traj_1_12_MVPA 
+round(mean(trajectory_1_2$MVPA_at_14), digits = 0) -> traj_1_14_MVPA
+trajectory_1_2_MVPA <- c(traj_1_10_MVPA, traj_1_12_MVPA, traj_1_14_MVPA)
+MVPA_plot_1 <- data.frame(age, trajectory_1_2_MVPA)
+MVPA_plot_1[] <- lapply(MVPA_plot_1, as.numeric)
+
+round(mean(trajectory_2_2$MVPA_at_10), digits = 0) -> traj_2_10_MVPA
+round(mean(trajectory_2_2$MVPA_at_12), digits = 0) -> traj_2_12_MVPA
+round(mean(trajectory_2_2$MVPA_at_14), digits = 0) -> traj_2_14_MVPA
+trajectory_2_2_MVPA <- c(traj_2_10_MVPA, traj_2_12_MVPA, traj_2_14_MVPA)
+MVPA_plot_2 <- data.frame(age, trajectory_2_2_MVPA)
+MVPA_plot_2[] <- lapply(MVPA_plot_2, as.numeric)
+
+round(mean(trajectory_3_2$MVPA_at_10), digits = 0) -> traj_3_10_MVPA
+round(mean(trajectory_3_2$MVPA_at_12), digits = 0) -> traj_3_12_MVPA 
+round(mean(trajectory_3_2$MVPA_at_14), digits = 0) -> traj_3_14_MVPA
+trajectory_3_2_MVPA <- c(traj_3_10_MVPA, traj_3_12_MVPA, traj_3_14_MVPA)
+MVPA_plot_3 <- data.frame(age, trajectory_3_2_MVPA)
+MVPA_plot_3[] <- lapply(MVPA_plot_3, as.numeric)
+
+
+#Name variables for sleep 
+round(mean(trajectory_1_2$sleep_at_10), digits = 0) -> traj_1_10_sleep
+round(mean(trajectory_1_2$sleep_at_12), digits = 0) -> traj_1_12_sleep 
+round(mean(trajectory_1_2$sleep_at_14), digits = 0) -> traj_1_14_sleep
+trajectory_1_2_sleep <- c(traj_1_10_sleep, traj_1_12_sleep, traj_1_14_sleep)
+sleep_plot_1 <- data.frame(age, trajectory_1_2_sleep)
+sleep_plot_1[] <- lapply(sleep_plot_1, as.numeric)
+
+round(mean(trajectory_2_2$sleep_at_10), digits = 0) -> traj_2_10_sleep
+round(mean(trajectory_2_2$sleep_at_12), digits = 0) -> traj_2_12_sleep
+round(mean(trajectory_2_2$sleep_at_14), digits = 0) -> traj_2_14_sleep
+trajectory_2_2_sleep <- c(traj_2_10_sleep, traj_2_12_sleep, traj_2_14_sleep)
+sleep_plot_2 <- data.frame(age, trajectory_2_2_sleep)
+sleep_plot_2[] <- lapply(sleep_plot_2, as.numeric)
+
+round(mean(trajectory_3_2$sleep_at_10), digits = 0) -> traj_3_10_sleep
+round(mean(trajectory_3_2$sleep_at_12), digits = 0) -> traj_3_12_sleep 
+round(mean(trajectory_3_2$sleep_at_14), digits = 0) -> traj_3_14_sleep
+trajectory_3_2_sleep <- c(traj_3_10_sleep, traj_3_12_sleep, traj_3_14_sleep)
+sleep_plot_3 <- data.frame(age, trajectory_3_2_sleep)
+sleep_plot_3[] <- lapply(sleep_plot_3, as.numeric)
+
+#Name variables for SB
+round(mean(trajectory_1_2$SB_at_10), digits = 0) -> traj_1_10_SB
+round(mean(trajectory_1_2$SB_at_12), digits = 0) -> traj_1_12_SB 
+round(mean(trajectory_1_2$SB_at_14), digits = 0) -> traj_1_14_SB
+trajectory_1_2_SB <- c(traj_1_10_SB, traj_1_12_SB, traj_1_14_SB)
+SB_plot_1 <- data.frame(age, trajectory_1_2_SB)
+SB_plot_1[] <- lapply(SB_plot_1, as.numeric)
+
+round(mean(trajectory_2_2$SB_at_10), digits = 0) -> traj_2_10_SB
+round(mean(trajectory_2_2$SB_at_12), digits = 0) -> traj_2_12_SB
+round(mean(trajectory_2_2$SB_at_14), digits = 0) -> traj_2_14_SB
+trajectory_2_2_SB <- c(traj_2_10_SB, traj_2_12_SB, traj_2_14_SB)
+SB_plot_2 <- data.frame(age, trajectory_2_2_SB)
+SB_plot_2[] <- lapply(SB_plot_2, as.numeric)
+
+round(mean(trajectory_3_2$SB_at_10), digits = 0) -> traj_3_10_SB
+round(mean(trajectory_3_2$SB_at_12), digits = 0) -> traj_3_12_SB 
+round(mean(trajectory_3_2$SB_at_14), digits = 0) -> traj_3_14_SB
+trajectory_3_2_SB <- c(traj_3_10_SB, traj_3_12_SB, traj_3_14_SB)
+SB_plot_3 <- data.frame(age, trajectory_3_2_SB)
+SB_plot_3[] <- lapply(SB_plot_3, as.numeric)
+
+```
+
+
+
+
+```{r include=FALSE}
+#Plot each trajectory for LPA; only include y-axis label for first trajectory
+pm1 <- ggplot(data = LPA_plot_1, aes(x = age, y = trajectory_1_2_LPA)) + geom_line(color = "#999999", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + labs(y= NULL) + ylim(60,200) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + theme_minimal_grid(12) + labs(x = NULL) + theme(axis.text=element_text(size=14)) 
+
+pm2 <- ggplot(data = LPA_plot_2, aes(x = age, y = trajectory_2_2_LPA)) + geom_line(color = "#56B4E9", size = 1.1) +  theme(plot.title = element_text(hjust = 0.5)) + ylim(60,200) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL) + theme(axis.text=element_text(size=14)) 
+
+pm3 <- ggplot(data = LPA_plot_3, aes(x = age, y = trajectory_3_2_LPA)) + geom_line(color ="#009E73", size = 1.1) +  theme(plot.title = element_text(hjust = 0.5)) + ylim(60,200) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL) + theme(axis.text=element_text(size=14)) 
+
+#Plot each trajectory for MVPA; only include y-axis label for first trajectory, no titles 
+pm4 <- ggplot(data = MVPA_plot_1, aes(x = age, y = trajectory_1_2_MVPA)) + geom_line(color = "#999999", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + labs(y= NULL) + ylim(30,90) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + theme_minimal_grid(12) + labs(x = NULL) + theme(axis.text=element_text(size=14)) 
+
+pm5 <- ggplot(data = MVPA_plot_2, aes(x = age, y = trajectory_2_2_MVPA)) + geom_line(color = "#56B4E9", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + ylim(30,90) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL) + theme(axis.text=element_text(size=14))
+
+pm6 <- ggplot(data = MVPA_plot_3, aes(x = age, y = trajectory_3_2_MVPA)) + geom_line(color = "#009E73", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + ylim(30,90) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL) + theme(axis.text=element_text(size=14))
+
+
+
+#Plot each trajectory for sleep; only include y-axis label for first trajectory, no titles 
+pm7 <- ggplot(data = sleep_plot_1, aes(x = age, y = trajectory_1_2_sleep)) + geom_line(color = "#999999", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + labs(y= NULL) + ylim(550, 610) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + theme_minimal_grid(12) + labs(x = NULL) + theme(axis.text=element_text(size=14))
+
+pm8 <- ggplot(data = sleep_plot_2, aes(x = age, y = trajectory_2_2_sleep)) + geom_line(color = "#56B4E9", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + ylim(550, 610) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL) + theme(axis.text=element_text(size=14))
+
+pm9 <- ggplot(data = sleep_plot_3, aes(x = age, y = trajectory_3_2_sleep)) + geom_line(color = "#009E73", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + ylim(550, 610) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL) + theme(axis.text=element_text(size=14))
+
+
+#Plot each trajectory for SB; only include y-axis label for first trajectory, no titles 
+pm10 <- ggplot(data = SB_plot_1, aes(x = age, y = trajectory_1_2_SB)) + geom_line(color = "#999999", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + labs(y= NULL) + ylim(590,750) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + theme_minimal_grid(12) + labs(x = NULL) + theme(axis.text=element_text(size=14))
+
+pm11 <- ggplot(data = SB_plot_2, aes(x = age, y = trajectory_2_2_SB)) + geom_line(color = "#56B4E9", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + ylim(590,750) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL) + theme(axis.text=element_text(size=14))
+
+pm12 <- ggplot(data = SB_plot_3, aes(x = age, y = trajectory_3_2_SB)) + geom_line(color = "#009E73", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + ylim(590,750) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL) + theme(axis.text=element_text(size=14))
+
+
+
+```
+
+
+```{r include=FALSE}
+#Add results for best fit model(s) to the dataset - Model 3 and 6 
+load("C:/Users/katri/Documents/ACU/Study_2/Study_2/results_female_gen_weekday.Rdata")
+results_female_gen_weekday
+
+ 
+#Add column for Model 4 trajectories 
+results_female_gen_weekday[[4]]$assign.list$`1`-> traj_1_model4
+results_female_gen_weekday[[4]]$assign.list$`2`-> traj_2_model4
+results_female_gen_weekday[[4]]$assign.list$`3`-> traj_3_model4
+results_female_gen_weekday[[4]]$assign.list$`4`-> traj_4_model4
+results_female_gen_weekday[[4]]$assign.list$`5`-> traj_5_model4
+
+
+
+as.data.frame(traj_1_model4)-> traj_1_df_model4
+as.data.frame(traj_2_model4)-> traj_2_df_model4
+as.data.frame(traj_3_model4)-> traj_3_df_model4
+as.data.frame(traj_4_model4)-> traj_4_df_model4
+as.data.frame(traj_5_model4)-> traj_5_df_model4
+
+
+
+traj_1_df_model4 <-
+  traj_1_df_model4 %>% 
+  mutate(trajectory = 1)
+traj_2_df_model4 <-
+  traj_2_df_model4 %>% 
+  mutate(trajectory = 2)
+traj_3_df_model4 <-
+  traj_3_df_model4 %>% 
+  mutate(trajectory = 3)
+traj_4_df_model4 <-
+  traj_4_df_model4 %>% 
+  mutate(trajectory = 4)
+traj_5_df_model4 <-
+  traj_5_df_model4 %>% 
+  mutate(trajectory = 5)
+
+
+dplyr::rename(traj_1_df_model4, hicid = traj_1_model4) -> traj_1_df_model4
+dplyr::rename(traj_2_df_model4, hicid = traj_2_model4) -> traj_2_df_model4
+dplyr::rename(traj_3_df_model4, hicid = traj_3_model4) -> traj_3_df_model4
+dplyr::rename(traj_4_df_model4, hicid = traj_4_model4) -> traj_4_df_model4
+dplyr::rename(traj_5_df_model4, hicid = traj_5_model4) -> traj_5_df_model4
+
+
+
+do.call("rbind", list(traj_1_df_model4, traj_2_df_model4, traj_3_df_model4, traj_4_df_model4, traj_5_df_model4)) -> gen_females_model4
+arrange(gen_females_model4, hicid) -> gen_females_model4
+df_females_gen_weekday$model4_trajectory_assignments <- gen_females_model4$trajectory
+df_females_gen_weekday[,"model4_trajectory_assignments"]
+save(df_females_gen_weekday, file = 'C:/Users/katri/Documents/ACU/Study_2/Study_2/Study_2/df_females_gen_weekday.RData')
+
+```
+
+
+```{r include=FALSE}
+#Make dataframe for each Trajectory from the best fit model 
+trajectory_1_4 <- df_females_gen_weekday[(df_females_gen_weekday$model4_trajectory_assignments == 1),]
+trajectory_2_4 <- df_females_gen_weekday[(df_females_gen_weekday$model4_trajectory_assignments == 2),]
+trajectory_3_4 <- df_females_gen_weekday[(df_females_gen_weekday$model4_trajectory_assignments == 3),]
+trajectory_4_4 <- df_females_gen_weekday[(df_females_gen_weekday$model4_trajectory_assignments == 4),]
+trajectory_5_4 <- df_females_gen_weekday[(df_females_gen_weekday$model4_trajectory_assignments == 5),]
+
+
+#Define age for x axis 
+age <- c("10", "12", "14")
+#Assign each MB for each trajectory to a variable; start with each MB because order matters when entering the individual plots into the multiplot 
+
+#Name variables for LPA and create vectors for each plot 
+round(mean(trajectory_1_4$LPA_at_10), digits = 0) -> traj_1_10_LPA
+round(mean(trajectory_1_4$LPA_at_12), digits = 0) -> traj_1_12_LPA 
+round(mean(trajectory_1_4$LPA_at_14), digits = 0) -> traj_1_14_LPA
+trajectory_1_4_LPA <- c(traj_1_10_LPA, traj_1_12_LPA, traj_1_14_LPA)
+LPA_plot_1 <- data.frame(age, trajectory_1_4_LPA)
+LPA_plot_1[] <- lapply(LPA_plot_1, as.numeric)
+
+round(mean(trajectory_2_4$LPA_at_10), digits = 0) -> traj_2_10_LPA
+round(mean(trajectory_2_4$LPA_at_12), digits = 0) -> traj_2_12_LPA
+round(mean(trajectory_2_4$LPA_at_14), digits = 0) -> traj_2_14_LPA
+trajectory_2_4_LPA <- c(traj_2_10_LPA, traj_2_12_LPA, traj_2_14_LPA)
+LPA_plot_2 <- data.frame(age, trajectory_2_4_LPA)
+LPA_plot_2[] <- lapply(LPA_plot_2, as.numeric)
+
+round(mean(trajectory_3_4$LPA_at_10), digits = 0) -> traj_3_10_LPA
+round(mean(trajectory_3_4$LPA_at_12), digits = 0) -> traj_3_12_LPA 
+round(mean(trajectory_3_4$LPA_at_14), digits = 0) -> traj_3_14_LPA
+trajectory_3_4_LPA <- c(traj_3_10_LPA, traj_3_12_LPA, traj_3_14_LPA)
+LPA_plot_3 <- data.frame(age, trajectory_3_4_LPA)
+LPA_plot_3[] <- lapply(LPA_plot_3, as.numeric)
+
+round(mean(trajectory_4_4$LPA_at_10), digits = 0) -> traj_4_10_LPA
+round(mean(trajectory_4_4$LPA_at_12), digits = 0) -> traj_4_12_LPA 
+round(mean(trajectory_4_4$LPA_at_14), digits = 0) -> traj_4_14_LPA
+trajectory_4_4_LPA <- c(traj_4_10_LPA, traj_4_12_LPA, traj_4_14_LPA)
+LPA_plot_4 <- data.frame(age, trajectory_4_4_LPA)
+LPA_plot_4[] <- lapply(LPA_plot_4, as.numeric)
+
+round(mean(trajectory_5_4$LPA_at_10), digits = 0) -> traj_5_10_LPA
+round(mean(trajectory_5_4$LPA_at_12), digits = 0) -> traj_5_12_LPA
+round(mean(trajectory_5_4$LPA_at_14), digits = 0) -> traj_5_14_LPA
+trajectory_5_4_LPA <- c(traj_5_10_LPA, traj_5_12_LPA, traj_5_14_LPA)
+LPA_plot_5 <- data.frame(age, trajectory_5_4_LPA)
+LPA_plot_5[] <- lapply(LPA_plot_5, as.numeric)
+
+
+
+#Name variables for MVPA
+round(mean(trajectory_1_4$MVPA_at_10), digits = 0) -> traj_1_10_MVPA
+round(mean(trajectory_1_4$MVPA_at_12), digits = 0) -> traj_1_12_MVPA 
+round(mean(trajectory_1_4$MVPA_at_14), digits = 0) -> traj_1_14_MVPA
+trajectory_1_4_MVPA <- c(traj_1_10_MVPA, traj_1_12_MVPA, traj_1_14_MVPA)
+MVPA_plot_1 <- data.frame(age, trajectory_1_4_MVPA)
+MVPA_plot_1[] <- lapply(MVPA_plot_1, as.numeric)
+
+round(mean(trajectory_2_4$MVPA_at_10), digits = 0) -> traj_2_10_MVPA
+round(mean(trajectory_2_4$MVPA_at_12), digits = 0) -> traj_2_12_MVPA
+round(mean(trajectory_2_4$MVPA_at_14), digits = 0) -> traj_2_14_MVPA
+trajectory_2_4_MVPA <- c(traj_2_10_MVPA, traj_2_12_MVPA, traj_2_14_MVPA)
+MVPA_plot_2 <- data.frame(age, trajectory_2_4_MVPA)
+MVPA_plot_2[] <- lapply(MVPA_plot_2, as.numeric)
+
+round(mean(trajectory_3_4$MVPA_at_10), digits = 0) -> traj_3_10_MVPA
+round(mean(trajectory_3_4$MVPA_at_12), digits = 0) -> traj_3_12_MVPA 
+round(mean(trajectory_3_4$MVPA_at_14), digits = 0) -> traj_3_14_MVPA
+trajectory_3_4_MVPA <- c(traj_3_10_MVPA, traj_3_12_MVPA, traj_3_14_MVPA)
+MVPA_plot_3 <- data.frame(age, trajectory_3_4_MVPA)
+MVPA_plot_3[] <- lapply(MVPA_plot_3, as.numeric)
+
+round(mean(trajectory_4_4$MVPA_at_10), digits = 0) -> traj_4_10_MVPA
+round(mean(trajectory_4_4$MVPA_at_12), digits = 0) -> traj_4_12_MVPA 
+round(mean(trajectory_4_4$MVPA_at_14), digits = 0) -> traj_4_14_MVPA
+trajectory_4_4_MVPA <- c(traj_4_10_MVPA, traj_4_12_MVPA, traj_4_14_MVPA)
+MVPA_plot_4 <- data.frame(age, trajectory_4_4_MVPA)
+MVPA_plot_4[] <- lapply(MVPA_plot_4, as.numeric)
+
+round(mean(trajectory_5_4$MVPA_at_10), digits = 0) -> traj_5_10_MVPA
+round(mean(trajectory_5_4$MVPA_at_12), digits = 0) -> traj_5_12_MVPA
+round(mean(trajectory_5_4$MVPA_at_14), digits = 0) -> traj_5_14_MVPA
+trajectory_5_4_MVPA <- c(traj_5_10_MVPA, traj_5_12_MVPA, traj_5_14_MVPA)
+MVPA_plot_5 <- data.frame(age, trajectory_5_4_MVPA)
+MVPA_plot_5[] <- lapply(MVPA_plot_5, as.numeric)
+
+
+
+
+#Name variables for sleep 
+round(mean(trajectory_1_4$sleep_at_10), digits = 0) -> traj_1_10_sleep
+round(mean(trajectory_1_4$sleep_at_12), digits = 0) -> traj_1_12_sleep 
+round(mean(trajectory_1_4$sleep_at_14), digits = 0) -> traj_1_14_sleep
+trajectory_1_4_sleep <- c(traj_1_10_sleep, traj_1_12_sleep, traj_1_14_sleep)
+sleep_plot_1 <- data.frame(age, trajectory_1_4_sleep)
+sleep_plot_1[] <- lapply(sleep_plot_1, as.numeric)
+
+round(mean(trajectory_2_4$sleep_at_10), digits = 0) -> traj_2_10_sleep
+round(mean(trajectory_2_4$sleep_at_12), digits = 0) -> traj_2_12_sleep
+round(mean(trajectory_2_4$sleep_at_14), digits = 0) -> traj_2_14_sleep
+trajectory_2_4_sleep <- c(traj_2_10_sleep, traj_2_12_sleep, traj_2_14_sleep)
+sleep_plot_2 <- data.frame(age, trajectory_2_4_sleep)
+sleep_plot_2[] <- lapply(sleep_plot_2, as.numeric)
+
+round(mean(trajectory_3_4$sleep_at_10), digits = 0) -> traj_3_10_sleep
+round(mean(trajectory_3_4$sleep_at_12), digits = 0) -> traj_3_12_sleep 
+round(mean(trajectory_3_4$sleep_at_14), digits = 0) -> traj_3_14_sleep
+trajectory_3_4_sleep <- c(traj_3_10_sleep, traj_3_12_sleep, traj_3_14_sleep)
+sleep_plot_3 <- data.frame(age, trajectory_3_4_sleep)
+sleep_plot_3[] <- lapply(sleep_plot_3, as.numeric)
+
+round(mean(trajectory_4_4$sleep_at_10), digits = 0) -> traj_4_10_sleep
+round(mean(trajectory_4_4$sleep_at_12), digits = 0) -> traj_4_12_sleep 
+round(mean(trajectory_4_4$sleep_at_14), digits = 0) -> traj_4_14_sleep
+trajectory_4_4_sleep <- c(traj_4_10_sleep, traj_4_12_sleep, traj_4_14_sleep)
+sleep_plot_4 <- data.frame(age, trajectory_4_4_sleep)
+sleep_plot_4[] <- lapply(sleep_plot_4, as.numeric)
+
+round(mean(trajectory_5_4$sleep_at_10), digits = 0) -> traj_5_10_sleep
+round(mean(trajectory_5_4$sleep_at_12), digits = 0) -> traj_5_12_sleep
+round(mean(trajectory_5_4$sleep_at_14), digits = 0) -> traj_5_14_sleep
+trajectory_5_4_sleep <- c(traj_5_10_sleep, traj_5_12_sleep, traj_5_14_sleep)
+sleep_plot_5 <- data.frame(age, trajectory_5_4_sleep)
+sleep_plot_5[] <- lapply(sleep_plot_5, as.numeric)
+
+
+
+#Name variables for SB
+round(mean(trajectory_1_4$SB_at_10), digits = 0) -> traj_1_10_SB
+round(mean(trajectory_1_4$SB_at_12), digits = 0) -> traj_1_12_SB 
+round(mean(trajectory_1_4$SB_at_14), digits = 0) -> traj_1_14_SB
+trajectory_1_4_SB <- c(traj_1_10_SB, traj_1_12_SB, traj_1_14_SB)
+SB_plot_1 <- data.frame(age, trajectory_1_4_SB)
+SB_plot_1[] <- lapply(SB_plot_1, as.numeric)
+
+round(mean(trajectory_2_4$SB_at_10), digits = 0) -> traj_2_10_SB
+round(mean(trajectory_2_4$SB_at_12), digits = 0) -> traj_2_12_SB
+round(mean(trajectory_2_4$SB_at_14), digits = 0) -> traj_2_14_SB
+trajectory_2_4_SB <- c(traj_2_10_SB, traj_2_12_SB, traj_2_14_SB)
+SB_plot_2 <- data.frame(age, trajectory_2_4_SB)
+SB_plot_2[] <- lapply(SB_plot_2, as.numeric)
+
+round(mean(trajectory_3_4$SB_at_10), digits = 0) -> traj_3_10_SB
+round(mean(trajectory_3_4$SB_at_12), digits = 0) -> traj_3_12_SB 
+round(mean(trajectory_3_4$SB_at_14), digits = 0) -> traj_3_14_SB
+trajectory_3_4_SB <- c(traj_3_10_SB, traj_3_12_SB, traj_3_14_SB)
+SB_plot_3 <- data.frame(age, trajectory_3_4_SB)
+SB_plot_3[] <- lapply(SB_plot_3, as.numeric)
+
+round(mean(trajectory_4_4$SB_at_10), digits = 0) -> traj_4_10_SB
+round(mean(trajectory_4_4$SB_at_12), digits = 0) -> traj_4_12_SB 
+round(mean(trajectory_4_4$SB_at_14), digits = 0) -> traj_4_14_SB
+trajectory_4_4_SB <- c(traj_4_10_SB, traj_4_12_SB, traj_4_14_SB)
+SB_plot_4 <- data.frame(age, trajectory_4_4_SB)
+SB_plot_4[] <- lapply(SB_plot_4, as.numeric)
+
+round(mean(trajectory_5_4$SB_at_10), digits = 0) -> traj_5_10_SB
+round(mean(trajectory_5_4$SB_at_12), digits = 0) -> traj_5_12_SB
+round(mean(trajectory_5_4$SB_at_14), digits = 0) -> traj_5_14_SB
+trajectory_5_4_SB <- c(traj_5_10_SB, traj_5_12_SB, traj_5_14_SB)
+SB_plot_5 <- data.frame(age, trajectory_5_4_SB)
+SB_plot_5[] <- lapply(SB_plot_5, as.numeric)
+
+
+```
+
+```{r include=FALSE}
+#Plot each trajectory for LPA; only include y-axis label for first trajectory 
+pf1 <- ggplot(data = LPA_plot_1, aes(x = age, y = trajectory_1_4_LPA)) + geom_line(color = "#D55E00", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + labs(y= NULL) + ylim(60,230) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + theme_minimal_grid(12) + labs(x = NULL)
+
+pf2 <- ggplot(data = LPA_plot_2, aes(x = age, y = trajectory_2_4_LPA)) + geom_line(color = "#56B4E9", size = 1.1) +  theme(plot.title = element_text(hjust = 0.5)) + ylim(60,230) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL)
+
+pf3 <- ggplot(data = LPA_plot_3, aes(x = age, y = trajectory_3_4_LPA)) + geom_line(color = "#009E73", size = 1.1) +  theme(plot.title = element_text(hjust = 0.5)) + ylim(60,230) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL)
+
+pf4 <- ggplot(data = LPA_plot_4, aes(x = age, y = trajectory_4_4_LPA)) + geom_line(color = "#999999", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + labs(y= NULL) + ylim(60,230) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + theme_minimal_grid(12) + labs(x = NULL)
+
+pf5 <- ggplot(data = LPA_plot_5, aes(x = age, y = trajectory_5_4_LPA)) + geom_line(color = "#CC79A7", size = 1.1) +  theme(plot.title = element_text(hjust = 0.5)) + ylim(60,230) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL)
+
+
+
+#Plot each trajectory for MVPA; only include y-axis label for first trajectory, no titles 
+pf6 <- ggplot(data = MVPA_plot_1, aes(x = age, y = trajectory_1_4_MVPA)) + geom_line(color = "#D55E00", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + labs(y= NULL) + ylim(20,90) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + theme_minimal_grid(12) + labs(x = NULL)
+
+pf7 <- ggplot(data = MVPA_plot_2, aes(x = age, y = trajectory_2_4_MVPA)) + geom_line(color = "#56B4E9", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + ylim(20,90) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL)
+
+pf8 <- ggplot(data = MVPA_plot_3, aes(x = age, y = trajectory_3_4_MVPA)) + geom_line(color = "#009E73", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + ylim(20,90) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL)
+
+pf9 <- ggplot(data = MVPA_plot_4, aes(x = age, y = trajectory_4_4_MVPA)) + geom_line(color = "#999999", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + labs(y= NULL) + ylim(20,90) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + theme_minimal_grid(12) + labs(x = NULL)
+
+pf10 <- ggplot(data = MVPA_plot_5, aes(x = age, y = trajectory_5_4_MVPA)) + geom_line(color = "#CC79A7", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + ylim(20,90) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL)
+
+
+
+#Plot each trajectory for sleep; only include y-axis label for first trajectory, no titles 
+pf11 <- ggplot(data = sleep_plot_1, aes(x = age, y = trajectory_1_4_sleep)) + geom_line(color = "#D55E00", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + labs(y= NULL) + ylim(530, 620) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + theme_minimal_grid(12) + labs(x = NULL)
+
+pf12 <- ggplot(data = sleep_plot_2, aes(x = age, y = trajectory_2_4_sleep)) + geom_line(color = "#56B4E9", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + ylim(530, 620) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL)
+
+pf13 <- ggplot(data = sleep_plot_3, aes(x = age, y = trajectory_3_4_sleep)) + geom_line(color = "#009E73", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + ylim(530, 620) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL)
+
+pf14 <- ggplot(data = sleep_plot_4, aes(x = age, y = trajectory_4_4_sleep)) + geom_line(color = "#999999", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + labs(y= NULL) + ylim(530, 620) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + theme_minimal_grid(12) + labs(x = NULL)
+
+pf15 <- ggplot(data = sleep_plot_5, aes(x = age, y = trajectory_5_4_sleep)) + geom_line(color = "#CC79A7", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + ylim(530, 620) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL)
+
+
+
+#Plot each trajectory for SB; only include y-axis label for first trajectory, no titles 
+pf16 <- ggplot(data = SB_plot_1, aes(x = age, y = trajectory_1_4_SB)) + geom_line(color = "#D55E00", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + labs(y= NULL) + ylim(500, 770) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2))  + theme_minimal_grid(12) + labs(x = NULL)
+
+pf17 <- ggplot(data = SB_plot_2, aes(x = age, y = trajectory_2_4_SB)) + geom_line(color = "#56B4E9", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + ylim(500, 770) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL)
+
+pf18 <- ggplot(data = SB_plot_3, aes(x = age, y = trajectory_3_4_SB)) + geom_line(color = "#009E73", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + ylim(500, 770) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL)
+
+pf19 <- ggplot(data = SB_plot_4, aes(x = age, y = trajectory_4_4_SB)) + geom_line(color = "#999999", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + labs(y= NULL) + ylim(500, 770) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2))  + theme_minimal_grid(12) + labs(x = NULL)
+
+pf20 <- ggplot(data = SB_plot_5, aes(x = age, y = trajectory_5_4_SB)) + geom_line(color = "#CC79A7", size = 1.1) + theme(plot.title = element_text(hjust = 0.5)) + ylim(500, 770) + theme(legend.position="none") + scale_x_continuous(breaks = seq(10,14,2)) + labs(y = NULL) + theme_minimal_grid(12) + labs(x = NULL)
+
+
+
+```
+
+
+
+
+```{r echo=FALSE, fig.width= 18, fig.height=15}
+#Thesis version - individual male and female plots 
+
+aligned <- align_plots (pm1, pm2, pm3, pm4, pm5, pm6, pm7, pm8, pm9, pm10, pm11, pm12, align = "h")
+#ggdraw(aligned[[]])
+tj1 <- ggdraw() + draw_label("Highly actives\n(33%)", y = 0.1, vjust = 0, fontface = "plain", size = 20)
+tj2 <- ggdraw() + draw_label("Inactive-sitters\n(54%)", y = 0.1, vjust = 0, fontface = "plain", size = 20)
+tj3 <- ggdraw() + draw_label("Decreasing activity\n(13%)", y = 0.1, vjust = 0, fontface = "plain", size = 20)
+subtitle_male <- ggdraw() +
+  draw_label(
+  "Male",
+  fontface = "bold",
+  x = 0,
+  hjust = 0,
+  size = 12
+)
+LPA <- ggdraw() +
+draw_label(
+  "Light Physical Activity (minutes)",
+  fontface = "plain",
+  #x = .45,
+  x = 0,
+  size = 18,
+  hjust = 0
+)
+MVPA <- ggdraw() +
+draw_label(
+  "Moderate-Vigorous Physical Activity (minutes)",
+  fontface = "plain",
+  #x = .6,
+  x = 0,
+  size = 18,
+  hjust = 0
+)
+sleep <- ggdraw() +
+draw_label(
+  "Sleep (minutes)",
+  fontface = "plain",
+  #x = .25,
+  x = 0,
+  size = 18,
+  hjust = 0
+)
+SB <- ggdraw() +
+draw_label(
+  "Sedentary Behavior (minutes)",
+  fontface = "plain",
+  #x = .45,
+  x = 0,
+  size = 18,
+  hjust = 0
+)
+age <- ggdraw() +
+draw_label(
+  "age (years)",
+  fontface = "plain",
+  x = .5,
+  size = 16
+)
+empty <- ggdraw()
+plot_grid(tj1,tj2,tj3,
+          LPA,empty,empty,
+          pm2,pm1,pm3,
+          MVPA,empty,empty,
+          pm5,pm4,pm6,
+          sleep,empty,empty,
+          pm8,pm7,pm9,
+          SB,empty,empty,
+          pm11,pm10,pm12,
+          empty,age,empty, ncol=3, align = "v", rel_heights = c(1,1,3,1,3,1,3,1,3,.6))
+```
+```{r echo=FALSE, fig.width= 18, fig.height=15}
+aligned <- align_plots (pf2,pf4,pf3,pf1,pf5, pf7,pf9,pf8,pf6,pf10, pf12,pf14,pf13,pf11,pf15,  pf17,pf19,pf18,pf16,pf20, align = "h")
+#ggdraw(aligned[[]])
+tj1 <- ggdraw() + draw_label("Highly actives\n(33%)", y = 0.1, vjust = 0, fontface = "plain", size = 18)
+tj2 <- ggdraw() + draw_label("Inactive-sitters\n(54%)", y = 0.1, vjust = 0, fontface = "plain", size = 18)
+tj3 <- ggdraw() + draw_label("Decreasing activity\n(13%)", y = 0.1, vjust = 0, fontface = "plain", size = 18)
+tj4 <- ggdraw() + draw_label("High sleepers\n(28%)", y = 0.1, vjust = 0, fontface = "plain", size = 24)
+tj5 <- ggdraw() + draw_label("Highly actives\n(24%)", y = 0.1, vjust = 0, fontface = "plain", size = 24)
+tj6 <- ggdraw() + draw_label("Decreasing activity\n(5%)", y = 0.1, vjust = 0, fontface = "plain", size = 24)
+tj7 <- ggdraw() + draw_label("Inactive-sitters\n(27%)", y = 0.1, vjust = 0, fontface = "plain", size = 24)
+tj8 <- ggdraw() + draw_label("Lightly actives\n(16%)", y = 0.1, vjust = 0, fontface = "plain", size = 24)
+title <- ggdraw() + 
+  draw_label(
+    "Figure 1.",
+    fontface = 'bold',
+    x = 0,
+    hjust =  0,
+    size = 14
+  ) 
+subtitle <- ggdraw() + 
+  draw_label(
+    "General Movement Behaviour Trajectories",
+    fontface = 'italic',
+    x = 0,
+    hjust =  0,
+    size = 14
+  ) 
+subtitle_male <- ggdraw() +
+  draw_label(
+  "Male",
+  fontface = "bold",
+  x = 0,
+  hjust = 0,
+  size = 12
+)
+subtitle_female <- ggdraw() +
+draw_label(
+  "Female",
+  fontface = "bold",
+  x = 0,
+  hjust = 0,
+  size = 12
+)
+LPA <- ggdraw() +
+draw_label(
+  "Light Physical Activity (minutes)",
+  fontface = "plain",
+  #x = .45,
+  x = 0,
+  size = 20,
+  hjust = 0
+)
+MVPA <- ggdraw() +
+draw_label(
+  "Moderate-Vigorous Physical Activity (minutes)",
+  fontface = "plain",
+  #x = .6,
+  x = 0,
+  size = 20,
+  hjust = 0
+)
+sleep <- ggdraw() +
+draw_label(
+  "Sleep (minutes)",
+  fontface = "plain",
+  #x = .25,
+  x = 0,
+  size = 20,
+  hjust = 0
+)
+SB <- ggdraw() +
+draw_label(
+  "Sedentary Behavior (minutes)",
+  fontface = "plain",
+  #x = .45,
+  x = 0,
+  size = 20,
+  hjust = 0
+)
+age <- ggdraw() +
+draw_label(
+  "age (years)",
+  fontface = "plain",
+  x = .5,
+  size = 18
+)
+empty <- ggdraw()
+footnote <- ggdraw() + draw_label("Note: LPA = Light-Intensity Physical Activity, MVPA = Moderate- to Vigorous- Intensity Physical Activity, SB = Sedentary Behavior", size = 12, x = 0, hjust = 0, vjust = 1, y = 0.9)
+plot_grid(tj5,tj7,tj6,tj4,tj8,
+          LPA,empty,empty,empty,empty,
+          pf2,pf4,pf3,pf1,pf5,
+          MVPA,empty,empty,empty,empty,
+          pf7,pf9,pf8,pf6,pf10,
+          sleep,empty,empty,empty,empty,
+          pf12,pf14,pf13,pf11,pf15,
+          SB,empty,empty,empty,empty,
+          pf17,pf19,pf18,pf16,pf20,
+          empty,empty,age,empty,empty, ncol=5, align = "v", rel_heights = c(1,1,3,1,3,1,3,1,3,.6))
+
+```
+
